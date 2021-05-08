@@ -1,0 +1,14 @@
+tables:
+
+  - name: cas
+    query: |
+      CREATE TABLE "cas" (
+        "id" INTEGER NOT NULL UNIQUE,
+        "name" TEXT NOT NULL, 
+        "description" TEXT, 
+        "contact" TEXT, 
+        "created" TEXT NOT NULL, 
+        "expires" TEXT, 
+        "anumber" INTEGER DEFAULT 0, 
+        PRIMARY KEY("id" AUTOINCREMENT)
+      );
