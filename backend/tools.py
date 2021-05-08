@@ -8,7 +8,7 @@ import random
 curDir = os.path.dirname(os.path.realpath(__file__)) 
 
 baseFolderPath = os.path.join(curDir, "certs")
-folders = ["root", "requests", "crt", "key"]
+folders = ["root", "req", "crt", "key"]
 
 subjects = ["commonname", "country", "state", "city", "organization", "unit"]
 countryCodes = [
@@ -44,6 +44,10 @@ class cert_fs:
     self.capath = os.path.join(baseFolderPath, caname)
     self.crtpath = os.path.join(self.capath, "root", caname+"_ca.pem")
     self.keypath = os.path.join(self.capath, "root", caname+"_ca.key")
+
+    self.keysPath = os.path.join(self.capath, "key")
+    self.reqsPath = os.path.join(self.capath, "req")
+    self.certsPath = os.path.join(self.capath, "crt")
 
     self.chk_folders()
 
@@ -87,6 +91,27 @@ class cert_fs:
     keyStr = flObj.read()
     flObj.close()
     return keyStr
+
+  #----------------------------------
+  def write_cert_pkey(self, fqdn, pKeyStr):
+    curKeyPath = os.path.join(self.keysPath, fqdn+".key")
+    flObj = open(curKeyPath, "w")
+    flObj.write(pKeyStr)
+    flObj.close()
+
+  #----------------------------------
+  def write_cert_req(self, fqdn, reqStr):
+    curReqPath = os.path.join(self.reqsPath, fqdn+".csr")
+    flObj = open(curReqPath, "w")
+    flObj.write(reqStr)
+    flObj.close()
+
+  #----------------------------------
+  def write_cert_crt(self, fqdn, crtStr):
+    curCrtPath = os.path.join(self.certsPath, fqdn+".crt")
+    flObj = open(curCrtPath, "w")
+    flObj.write(crtStr)
+    flObj.close()
 
   #----------------------------------
 
@@ -320,6 +345,7 @@ class cert_websrv:
       print(e)
       raise Exception("infailed to load ca: %s" %caname)
     
+    self.caname = caname
     self.caCrtObj = myCa.crtObj
 
     self.country = myCa.country
@@ -366,5 +392,35 @@ class cert_websrv:
     self.reqObj.get_subject().CN = self.fqdn
 
     self.reqObj.set_pubkey(self.pKey)
+  
+  #----------------------------------
+  def write_cert_objects_to_fs(self, cus=None):
+    if type(cus) == list:
+      res = cus
+    else:
+      res = self.convert_cert_objects_to_string()
+    
+    myCertFs = cert_fs(self.caname)
+
+    if "key" in res:
+      myCertFs.write_cert_pkey(fqdn=self.fqdn, pKeyStr=self.pKeyStr)
+
+    if "req" in res:
+      myCertFs.write_cert_req(fqdn=self.fqdn, reqStr=self.reqStr)
+
+    if "crt" in res:
+      myCertFs.write_cert_crt(fqdn=self.fqdn, crtStr=self.crtStr)
+
+    return res
+
+    
+    
+
+
+  #----------------------------------
+  
+  
+  #----------------------------------
+  
   
   #----------------------------------
