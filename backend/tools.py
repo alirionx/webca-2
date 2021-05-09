@@ -1,5 +1,6 @@
 import os, sys
 import json, yaml
+import re
 from OpenSSL import crypto, SSL
 import random
 
@@ -23,26 +24,33 @@ countryCodes = [
   "TW","TZ","UA","UG","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"
 ]
 
-domChars = [
-  "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", 
-  "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "-" 
-]
-
-stdValidity = 3*365*24*60*60
+stdRootValidity = 10*365*24*60*60
+stdCertValidity = 3*365*24*60*60
 
 keyLen = 2048
 
-#--------------------------------------------------
+#------------------------------------------------------
 
+class helpers:
+  #----------------------------------
+  def __init__(self):
+    inf = "helpers object created"
 
-#--------------------------------------------------
+  #----------------------------------
+  def gen_rendom_sn(self, bits=64):
+    ranSn = random.getrandbits(bits)
+    return ranSn
+  
+  #----------------------------------
+
+#------------------------------------------------------
 class cert_fs:
   #----------------------------------
   def __init__(self, caname):
     
     self.caname = caname
     self.capath = os.path.join(baseFolderPath, caname)
-    self.crtpath = os.path.join(self.capath, "root", caname+"_ca.pem")
+    self.crtpath = os.path.join(self.capath, "root", caname+"_ca.crt")
     self.keypath = os.path.join(self.capath, "root", caname+"_ca.key")
 
     self.keysPath = os.path.join(self.capath, "key")
@@ -116,7 +124,7 @@ class cert_fs:
   #----------------------------------
 
 
-#--------------------------------------------------
+#------------------------------------------------------
 class cert_root:
   #----------------------------------
   def __init__(self, caname=None):
@@ -129,7 +137,7 @@ class cert_root:
     self.organization = None
     self.unit = None
 
-    self.validity = stdValidity
+    self.validity = stdRootValidity
     
     self.key = None
     self.crtObj = None
@@ -142,12 +150,11 @@ class cert_root:
     cn = cn.lower()
     if type(cn) != str:
       raise Exception("wrong format. Use string")
-    if len(cn) < 4:
-      raise Exception("common name to short. Min 4 chars required.")
-    for char in cn:
-      if char not in domChars:
-        raise Exception("invalid character: %s" %char)
     
+    regEx = re.search('[a-z/.-]+[a-z]{2}$', cn)
+    if not regEx:
+      raise Exception("invalid ca name: %s" %cn)
+
     self.commonname = cn
 
   #----------------------------------
@@ -191,11 +198,6 @@ class cert_root:
       self.unit = unit
 
   #----------------------------------
-  def gen_rendom_sn(self):
-    ranSn = random.getrandbits(64)
-    return ranSn
-
-  #----------------------------------
   def gen_priv_key(self):
     keyObj = crypto.PKey()
     keyObj.generate_key(crypto.TYPE_RSA, keyLen)
@@ -222,7 +224,8 @@ class cert_root:
     self.crtObj.get_subject().OU = self.unit
     self.crtObj.get_subject().CN = self.commonname
 
-    self.crtObj.set_serial_number(self.gen_rendom_sn())
+    myHelpers = helpers()
+    self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
     self.crtObj.gmtime_adj_notBefore(0)
     self.crtObj.gmtime_adj_notAfter(self.validity)
 
@@ -290,6 +293,7 @@ class cert_root:
   #----------------------------------
 
 
+#------------------------------------------------------
 class cert_websrv:
   #----------------------------------
   def __init__(self, caname, fqdn):
@@ -307,7 +311,7 @@ class cert_websrv:
     self.load_ca(caname)
     self.set_fqdn(fqdn)
 
-    self.validity = stdValidity
+    self.validity = stdCertValidity
 
     self.pKey = None
 
@@ -324,20 +328,15 @@ class cert_websrv:
     fqdn = fqdn.lower()
     if type(fqdn) != str:
       raise Exception("wrong format. Use string")
-    elif len(fqdn) < 8:
-      raise Exception("common name to short. Min 8 chars required.")
-    elif "." not in fqdn or "." in fqdn[-2:] or "-" in fqdn[-2:]:
-      raise Exception("invalid FQDN: %s" %fqdn)
     
-    for char in fqdn:
-      if char not in domChars:
-        raise Exception("invalid character: %s" %char)
-    
+    regEx = re.search('[a-z/.\-]+[.][a-z]{2,4}$', fqdn)
+    if not regEx:
+      raise Exception("invalid fqdn: %s" %fqdn)
+
     self.fqdn = fqdn
 
   #----------------------------------
   def load_ca(self, caname):
-    
     try:
       myCa = cert_root(caname)
       myCa.load_cert_from_fs()
@@ -347,6 +346,7 @@ class cert_websrv:
     
     self.caname = caname
     self.caCrtObj = myCa.crtObj
+    self.caKeyObj = myCa.key
 
     self.country = myCa.country
     self.state = myCa.state
@@ -383,6 +383,7 @@ class cert_websrv:
   #----------------------------------
   def create_cert_request(self):
     self.reqObj = crypto.X509Req()
+    self.reqObj.set_version(3)
 
     self.reqObj.get_subject().C = self.country
     self.reqObj.get_subject().ST = self.state
@@ -390,9 +391,46 @@ class cert_websrv:
     self.reqObj.get_subject().O = self.organization
     self.reqObj.get_subject().OU = self.unit
     self.reqObj.get_subject().CN = self.fqdn
+    self.reqObj.get_subject().commonName = self.fqdn
+    
+    sanList = [
+      "DNS: {0}".format(self.fqdn),
+      "IP: {0}".format("192.168.10.21")
+    ]
+    sanListStrEnc = ", ".join(sanList).encode()
+
+    deschd = "DNS:"+self.fqdn
+    sanObj = [ 
+      crypto.X509Extension(type_name=b"basicConstraints", critical=False, value=b"CA:FALSE" ),
+      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=deschd.encode() ),
+      crypto.X509Extension(type_name=b"keyUsage", critical=False, value=b"digitalSignature" ),
+      crypto.X509Extension(type_name=b"extendedKeyUsage", critical=False, value=b"serverAuth" ),
+      #crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=", ".join(sanList).encode())
+    ]
+    self.reqObj.add_extensions(sanObj)
 
     self.reqObj.set_pubkey(self.pKey)
   
+  #----------------------------------
+  def sign_cert(self):
+    if not self.pKey or not self.reqObj:
+      raise Exception("Please create/load key and req first")
+    
+    self.crtObj = crypto.X509()
+    self.crtObj.set_version(2) # Drecksack!!!!!!!!!!!!
+
+    myHelpers = helpers()
+    self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
+    self.crtObj.gmtime_adj_notBefore(0)
+    self.crtObj.gmtime_adj_notAfter(self.validity)
+
+    self.crtObj.set_issuer(self.caCrtObj.get_subject())
+    self.crtObj.set_subject(self.reqObj.get_subject())
+    self.crtObj.add_extensions(self.reqObj.get_extensions())
+    self.crtObj.set_pubkey(self.pKey)
+
+    self.crtObj.sign(self.caKeyObj, 'sha512')
+
   #----------------------------------
   def write_cert_objects_to_fs(self, cus=None):
     if type(cus) == list:
@@ -416,6 +454,11 @@ class cert_websrv:
     
     
 
+
+  #----------------------------------
+  def print_cert_subs(self):
+    common_name = self.crtObj.get_subject().CN
+    print(common_name)
 
   #----------------------------------
   

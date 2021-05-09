@@ -1,9 +1,7 @@
 from tools import cert_fs, cert_root, cert_websrv
 
-
-
 # myRootCert = cert_root()
-# myRootCert.set_common_name("app-scape")
+# myRootCert.set_common_name("app-scape.lab")
 # myRootCert.set_country_code("DE")
 # myRootCert.set_state("BW")
 # myRootCert.set_city("STG")
@@ -28,13 +26,14 @@ from tools import cert_fs, cert_root, cert_websrv
 # myRootCert.write_cert_to_fs()
 
 
-myCert = cert_websrv(fqdn='www.app-scape.lab', caname='app-scape')
+myCert = cert_websrv(fqdn='caweb.app-scape.lab', caname='app-scape.lab')
 print(myCert.fqdn)
 print(myCert.caCrtObj.get_subject().CN)
 
 myCert.gen_priv_key()
 myCert.create_cert_request()
+myCert.sign_cert()
 res = myCert.convert_cert_objects_to_string()
-print(res)
-print(myCert.reqStr)
 res = myCert.write_cert_objects_to_fs()
+
+myCert.print_cert_subs()
