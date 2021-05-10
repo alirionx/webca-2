@@ -38,7 +38,7 @@ stdCertValidity = 3*365*24*60*60
 
 keyLen = 2048
 
-#------------------------------------------------------
+#----------------------------------------------------------
 
 class helpers:
   #----------------------------------
@@ -52,7 +52,7 @@ class helpers:
   
   #----------------------------------
 
-#------------------------------------------------------
+#----------------------------------------------------------
 class cert_fs:
   #----------------------------------
   def __init__(self, caname):
@@ -137,11 +137,94 @@ class cert_fs:
     flObj.close()
 
   #----------------------------------
+  def list_certificates(self):
+    resAry = []
+    tmpRes = os.listdir(self.certsPath)
+    for crtFileName in tmpRes:
+      tmpFilePath = os.path.join(self.certsPath, crtFileName)
+      if os.path.isfile(tmpFilePath):
+        cn = crtFileName.replace(".crt", "").replace(".pem", "")
+        resAry.append(cn)
 
+    return resAry
+  
+  #----------------------------------
+  
+  
   #----------------------------------
 
 
-#------------------------------------------------------
+#----------------------------------------------------------
+class meta_collector:
+
+  #----------------------------------
+  def __init__(self):
+    inf = "meta collector object created"
+
+  #----------------------------------
+  def collect_certificate_authorities(self): # Ein Traum in Code!!!!
+    
+    resObj = []
+    caAry = []
+    tmpRes = os.listdir(baseFolderPath)
+    for dirname in tmpRes:
+      tmpPath = os.path.join(baseFolderPath, dirname)
+      if os.path.isdir( tmpPath):
+        caAry.append(dirname)
+
+    for caname in caAry:
+      try:
+        tmpRootCert = cert_root(caname)
+        tmpRootCert.load_cert_from_fs()
+      except Exception as e:
+        print(e)
+        continue
+
+      tmpObj = { "name": caname }
+      for classKey, crtKey in subjects.items():
+        if hasattr(tmpRootCert, classKey):
+          if getattr(tmpRootCert, classKey):
+            tmpObj[classKey] = getattr(tmpRootCert, classKey)
+
+      resObj.append(tmpObj)
+
+    return resObj
+
+  #----------------------------------
+  def collect_certificates(self, caname):
+    resObj = []
+    
+    myCertFs = cert_fs(caname)
+    crtAry = myCertFs.list_certificates()
+    
+    for cn in crtAry:
+      try:
+        tmpCert = cert_websrv(caname, cn)
+        tmpCert.load_cert_from_fs()
+      except Exception as e:
+        print(e)
+        continue
+
+      tmpObj = { "name": cn }
+      for classKey, crtKey in subjects.items():
+        if hasattr(tmpCert, classKey):
+          if getattr(tmpCert, classKey):
+            tmpObj[classKey] = getattr(tmpCert, classKey)
+
+      resObj.append(tmpObj)
+
+    return resObj
+
+  #----------------------------------
+  
+  
+  #----------------------------------
+  
+  
+  #----------------------------------
+
+
+#----------------------------------------------------------
 class cert_root:
   #----------------------------------
   def __init__(self, caname=None):
