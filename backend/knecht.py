@@ -26,19 +26,19 @@ from tools import cert_fs, meta_collector, cert_root, cert_websrv
 # myRootCert.write_cert_to_fs()
 
 
-myCert = cert_websrv(caname='app-scape.lab', fqdn='mail.app-scape.lab')
-myCert.set_city("STG")
-myCert.set_email("dquilitzsch@app-scape.lab")
-myCert.set_unit("LAB")
+# myCert = cert_websrv(caname='app-scape.lab', fqdn='caweb.app-scape.lab')
+# myCert.set_city("STG")
+# myCert.set_email("dquilitzsch@app-scape.lab")
+# myCert.set_unit("LAB")
 #myCert.ipv4 = "192.168.10.23"
 #print(myCert.commonname)
 #print(myCert.caCrtObj.get_subject().CN)
 
-myCert.gen_priv_key()
-myCert.create_cert_request()
-myCert.sign_cert()
-res = myCert.convert_cert_objects_to_string()
-res = myCert.write_cert_objects_to_fs()
+# myCert.gen_priv_key()
+# myCert.create_cert_request()
+# myCert.sign_cert()
+# res = myCert.convert_cert_objects_to_string()
+# res = myCert.write_cert_objects_to_fs()
 
 # myCert.load_cert_from_fs()
 # myCert.renew_cert(days=10*365)
