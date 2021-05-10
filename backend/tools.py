@@ -11,7 +11,16 @@ curDir = os.path.dirname(os.path.realpath(__file__))
 baseFolderPath = os.path.join(curDir, "certs")
 folders = ["root", "req", "crt", "key"]
 
-subjects = ["commonname", "country", "state", "city", "organization", "unit"]
+subjects = {
+  "commonname": "CN", 
+  "country": "ST", 
+  "city": "L", 
+  "organization": "O", 
+  "unit": "OU", 
+  "email": "emailAddress"
+}
+mandaSubjects = ["commonname", "country", "organization", "email"]
+
 countryCodes = [
   "AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AS","AT","AU","AW","AX","AZ","BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN",
   "BO","BQ","BR","BS","BT","BV","BW","BZ","CA","CC","CD","CF","CG","CH","CK","CL","CM","CN","CO","CR","CU","CV","CW","CX","CY","CZ","DE","DJ",
@@ -87,15 +96,21 @@ class cert_fs:
     flObj.close()
 
   #----------------------------------
-  def get_root_cert_str(self):
-    flObj = open(self.crtpath, "rt")
+  def get_cert_str(self, fqdn=None):
+    if not fqdn: path = self.crtpath
+    else: path = os.path.join(self.certsPath, fqdn+".crt")
+
+    flObj = open(path, "rt")
     crtStr = flObj.read()
     flObj.close()
     return crtStr
 
   #----------------------------------
-  def get_root_key_str(self):
-    flObj = open(self.keypath, "rt")
+  def get_key_str(self, fqdn=None):
+    if not fqdn: path = self.keypath
+    else: path = os.path.join(self.keysPath, fqdn+".key")
+
+    flObj = open(path, "rt")
     keyStr = flObj.read()
     flObj.close()
     return keyStr
@@ -123,6 +138,8 @@ class cert_fs:
 
   #----------------------------------
 
+  #----------------------------------
+
 
 #------------------------------------------------------
 class cert_root:
@@ -136,6 +153,7 @@ class cert_root:
     self.city = None
     self.organization = None
     self.unit = None
+    self.email = None
 
     self.validity = stdRootValidity
     
@@ -198,6 +216,19 @@ class cert_root:
       self.unit = unit
 
   #----------------------------------
+  def set_email(self, email):
+    email = email.lower()
+    if type(email) != str:
+      raise Exception("wrong format. Use string")
+    
+    regEx = re.search('[a-z1-9.\-]+[@][a-z1-9]+[.][a-z]{2,4}$', email)
+    if not regEx:
+      raise Exception("invalid email: %s" %email)
+
+    self.email = email
+
+
+  #----------------------------------
   def gen_priv_key(self):
     keyObj = crypto.PKey()
     keyObj.generate_key(crypto.TYPE_RSA, keyLen)
@@ -206,7 +237,7 @@ class cert_root:
   #----------------------------------
   def create_root_cert(self):
     missingSubs = []
-    for sub in subjects:
+    for sub in mandaSubjects:
       if not getattr(self, sub):
         missingSubs.append(sub)
     
@@ -217,12 +248,18 @@ class cert_root:
       raise Exception("Please generate or load a private key first")
 
     self.crtObj = crypto.X509()
-    self.crtObj.get_subject().C = self.country
-    self.crtObj.get_subject().ST = self.state
-    self.crtObj.get_subject().L = self.city
-    self.crtObj.get_subject().O = self.organization
-    self.crtObj.get_subject().OU = self.unit
-    self.crtObj.get_subject().CN = self.commonname
+
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        setattr(self.crtObj.get_subject(), crtKey, curVal)
+
+    # self.crtObj.get_subject().C = self.country
+    # self.crtObj.get_subject().ST = self.state
+    # self.crtObj.get_subject().L = self.city
+    # self.crtObj.get_subject().O = self.organization
+    # self.crtObj.get_subject().OU = self.unit
+    # self.crtObj.get_subject().CN = self.commonname
 
     myHelpers = helpers()
     self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
@@ -271,18 +308,24 @@ class cert_root:
   #----------------------------------
   def load_cert_from_fs(self):
     myCertFs = cert_fs(self.commonname)
-    self.keyStr = myCertFs.get_root_key_str()
-    self.crtStr = myCertFs.get_root_cert_str()
-    
+    self.keyStr = myCertFs.get_key_str()
+    self.crtStr = myCertFs.get_cert_str()
+
     self.key = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     self.crtObj = crypto.load_certificate(crypto.FILETYPE_PEM, self.crtStr)
     
-    self.country = self.crtObj.get_subject().C
-    self.state = self.crtObj.get_subject().ST 
-    self.city = self.crtObj.get_subject().L
-    self.organization = self.crtObj.get_subject().O 
-    self.unit = self.crtObj.get_subject().OU
-    #self.commonname = self.crtObj.get_subject().CN
+    for classKey, crtKey in subjects.items():
+      if hasattr(self.crtObj.get_subject(), crtKey):
+        curVal = getattr(self.crtObj.get_subject(), crtKey)
+        setattr(self, classKey, curVal)
+        #print(curVal)
+      
+    # self.country = self.crtObj.get_subject().C
+    # self.state = self.crtObj.get_subject().ST 
+    # self.city = self.crtObj.get_subject().L
+    # self.organization = self.crtObj.get_subject().O 
+    # self.unit = self.crtObj.get_subject().OU
+    # self.commonname = self.crtObj.get_subject().CN
     
   #----------------------------------
   
@@ -300,13 +343,16 @@ class cert_websrv:
     
     self.caname = None
     self.caCrtObj = None
-    self.fqdn = None
+    self.commonname = None
+    self.ipv4 = None
+    self.ipv6 = None
 
     self.country = None
     self.state = None
     self.city = None
     self.organization = None
     self.unit = None
+    self.email = None
 
     self.load_ca(caname)
     self.set_fqdn(fqdn)
@@ -333,8 +379,60 @@ class cert_websrv:
     if not regEx:
       raise Exception("invalid fqdn: %s" %fqdn)
 
-    self.fqdn = fqdn
+    self.commonname = fqdn
 
+  #----------------------------------
+  def set_country_code(self, ccode ):
+    try:
+      ccode = ccode.upper()
+    except:
+      raise Exception("use string with two characters")
+
+    if ccode not in countryCodes:
+      raise Exception("Invalid country code. Use one of the following:\n %s" %countryCodes)
+    else:
+      self.country = ccode
+
+  #----------------------------------
+  def set_state(self, state ):
+    if type(state) != str:
+      raise Exception("wrong format. Use string")
+    else:
+      self.state = state
+  
+  #----------------------------------
+  def set_city(self, city ):
+    if type(city) != str:
+      raise Exception("wrong format. Use string")
+    else:
+      self.city = city
+
+  #----------------------------------
+  def set_organization(self, organization ):
+    if type(organization) != str:
+      raise Exception("wrong format. Use string")
+    else:
+      self.organization = organization
+
+  #----------------------------------
+  def set_unit(self, unit ):
+    if type(unit) != str:
+      raise Exception("wrong format. Use string")
+    else:
+      self.unit = unit
+
+  #----------------------------------
+  def set_email(self, email):
+    email = email.lower()
+    if type(email) != str:
+      raise Exception("wrong format. Use string")
+    
+    regEx = re.search('[a-z1-9.\-]+[@][a-z1-9\-]+[.][a-z]{2,4}$', email)
+    if not regEx:
+      raise Exception("invalid email: %s" %email)
+
+    self.email = email
+  
   #----------------------------------
   def load_ca(self, caname):
     try:
@@ -342,17 +440,17 @@ class cert_websrv:
       myCa.load_cert_from_fs()
     except Exception as e:
       print(e)
-      raise Exception("infailed to load ca: %s" %caname)
+      raise Exception("failed to load ca: %s" %caname)
     
     self.caname = caname
     self.caCrtObj = myCa.crtObj
     self.caKeyObj = myCa.key
 
     self.country = myCa.country
-    self.state = myCa.state
-    self.city = myCa.city
+    #self.state = myCa.state
+    #self.city = myCa.city
     self.organization = myCa.organization
-    self.unit = myCa.unit
+    #self.unit = myCa.unit
 
   #----------------------------------
   def gen_priv_key(self):
@@ -385,27 +483,38 @@ class cert_websrv:
     self.reqObj = crypto.X509Req()
     self.reqObj.set_version(3)
 
-    self.reqObj.get_subject().C = self.country
-    self.reqObj.get_subject().ST = self.state
-    self.reqObj.get_subject().L = self.city
-    self.reqObj.get_subject().O = self.organization
-    self.reqObj.get_subject().OU = self.unit
-    self.reqObj.get_subject().CN = self.fqdn
-    self.reqObj.get_subject().commonName = self.fqdn
-    
+
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        setattr(self.reqObj.get_subject(), crtKey, curVal)
+
+    # self.reqObj.get_subject().C = self.country
+    # self.reqObj.get_subject().ST = self.state
+    # self.reqObj.get_subject().L = self.city
+    # self.reqObj.get_subject().O = self.organization
+    # self.reqObj.get_subject().OU = self.unit
+    # self.reqObj.get_subject().CN = self.commonname
+    # self.reqObj.get_subject().emailAddress = self.email
+    # test = self.reqObj.get_subject()
+    # res = setattr(self.reqObj.get_subject(), "OU", "Palim")
+
     sanList = [
-      "DNS: {0}".format(self.fqdn),
-      "IP: {0}".format("192.168.10.21")
+      "DNS: {0}".format(self.commonname),
     ]
+    if self.ipv4: 
+      sanList.append( "IP: {0}".format(self.ipv4) )
+    if self.ipv6: 
+      sanList.append( "IP: {0}".format(self.ipv6) )
+
+
     sanListStrEnc = ", ".join(sanList).encode()
 
-    deschd = "DNS:"+self.fqdn
     sanObj = [ 
       crypto.X509Extension(type_name=b"basicConstraints", critical=False, value=b"CA:FALSE" ),
-      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=deschd.encode() ),
       crypto.X509Extension(type_name=b"keyUsage", critical=False, value=b"digitalSignature" ),
       crypto.X509Extension(type_name=b"extendedKeyUsage", critical=False, value=b"serverAuth" ),
-      #crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=", ".join(sanList).encode())
+      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=", ".join(sanList).encode())
     ]
     self.reqObj.add_extensions(sanObj)
 
@@ -441,19 +550,47 @@ class cert_websrv:
     myCertFs = cert_fs(self.caname)
 
     if "key" in res:
-      myCertFs.write_cert_pkey(fqdn=self.fqdn, pKeyStr=self.pKeyStr)
+      myCertFs.write_cert_pkey(fqdn=self.commonname, pKeyStr=self.pKeyStr)
 
     if "req" in res:
-      myCertFs.write_cert_req(fqdn=self.fqdn, reqStr=self.reqStr)
+      myCertFs.write_cert_req(fqdn=self.commonname, reqStr=self.reqStr)
 
     if "crt" in res:
-      myCertFs.write_cert_crt(fqdn=self.fqdn, crtStr=self.crtStr)
+      myCertFs.write_cert_crt(fqdn=self.commonname, crtStr=self.crtStr)
 
     return res
 
-    
-    
+  #----------------------------------
+  def load_cert_from_fs(self):
+    myCertFs = cert_fs(self.caname)
+    self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+    self.crtStr = myCertFs.get_cert_str(fqdn=self.commonname)
 
+    self.key = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    self.crtObj = crypto.load_certificate(crypto.FILETYPE_PEM, self.crtStr)
+    
+    for classKey, crtKey in subjects.items():
+      if hasattr(self.crtObj.get_subject(), crtKey):
+        curVal = getattr(self.crtObj.get_subject(), crtKey)
+        setattr(self, classKey, curVal)
+
+  #----------------------------------
+  def renew_cert(self, days=None):
+    if not self.crtObj or not self.key:
+      raise Exception("Please generate or load a certificate and private key first")
+    
+    if days:
+      renewPeriod = days*24*60*60
+    else:
+      renewPeriod = self.validity
+
+    self.crtObj.gmtime_adj_notBefore(0)
+    self.crtObj.gmtime_adj_notAfter(renewPeriod)
+
+    self.crtObj.set_issuer(self.crtObj.get_subject())
+    self.crtObj.set_pubkey(self.key)
+    self.crtObj.sign(self.key, 'sha512')
+    
 
   #----------------------------------
   def print_cert_subs(self):
