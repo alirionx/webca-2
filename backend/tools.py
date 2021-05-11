@@ -3,24 +3,26 @@ import json, yaml
 import re
 from OpenSSL import crypto, SSL
 import random
-
+from datetime import datetime
 
 #-Tools Globals------------------------------------
 curDir = os.path.dirname(os.path.realpath(__file__)) 
-
 baseFolderPath = os.path.join(curDir, "certs")
-folders = ["root", "req", "crt", "key"]
+settingsPath = os.path.join(curDir, "settings.yaml")
 
-subjects = {
-  "commonname": "CN", 
-  "country": "ST", 
-  "city": "L", 
-  "organization": "O", 
-  "unit": "OU", 
-  "email": "emailAddress"
-}
-mandaSubjects = ["commonname", "country", "organization", "email"]
+flObj = open(settingsPath, "r")
+objIn = yaml.safe_load(flObj)
+flObj.close()
 
+folders = objIn["folders"]
+subjects = objIn["subjects"]
+mandaSubjects = objIn["mandaSubjects"]
+stdRootValidity = objIn["stdRootValidity"]
+stdCertValidity = objIn["stdCertValidity"]
+keyLen = objIn["keyLen"]
+
+
+#Das Ding muss noch weg... in nen config file....
 countryCodes = [
   "AD","AE","AF","AG","AI","AL","AM","AO","AQ","AR","AS","AT","AU","AW","AX","AZ","BA","BB","BD","BE","BF","BG","BH","BI","BJ","BL","BM","BN",
   "BO","BQ","BR","BS","BT","BV","BW","BZ","CA","CC","CD","CF","CG","CH","CK","CL","CM","CN","CO","CR","CU","CV","CW","CX","CY","CZ","DE","DJ",
@@ -33,10 +35,7 @@ countryCodes = [
   "TW","TZ","UA","UG","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"
 ]
 
-stdRootValidity = 10*365*24*60*60
-stdCertValidity = 3*365*24*60*60
 
-keyLen = 2048
 
 #----------------------------------------------------------
 
@@ -49,6 +48,13 @@ class helpers:
   def gen_rendom_sn(self, bits=64):
     ranSn = random.getrandbits(bits)
     return ranSn
+  
+  #----------------------------------
+  def asn1_to_datestr(self, asn, fmt='%Y-%d-%m'):
+    tmpDateStr = asn.decode()[:8]
+    tmpDate = datetime.strptime(tmpDateStr, '%Y%d%m')
+    newDateStr = tmpDate.strftime(fmt)
+    return newDateStr
   
   #----------------------------------
 
@@ -179,12 +185,17 @@ class meta_collector:
       except Exception as e:
         print(e)
         continue
-
-      tmpObj = { "name": caname }
+      
+      tmpObj = tmpRootCert.get_meta_data()
+      tmpObj["name"] = caname
       for classKey, crtKey in subjects.items():
         if hasattr(tmpRootCert, classKey):
           if getattr(tmpRootCert, classKey):
             tmpObj[classKey] = getattr(tmpRootCert, classKey)
+      
+      if tmpRootCert.validity:
+        myHelpers = helpers()
+        tmpObj["validity"] = myHelpers.asn1_to_datestr(tmpRootCert.validity)
 
       resObj.append(tmpObj)
 
@@ -204,7 +215,7 @@ class meta_collector:
       except Exception as e:
         print(e)
         continue
-
+      
       tmpObj = { "name": cn }
       for classKey, crtKey in subjects.items():
         if hasattr(tmpCert, classKey):
@@ -238,8 +249,9 @@ class cert_root:
     self.unit = None
     self.email = None
 
-    self.validity = stdRootValidity
-    
+    self.validity = None
+    self.renewTime = stdRootValidity
+
     self.key = None
     self.crtObj = None
 
@@ -310,7 +322,6 @@ class cert_root:
 
     self.email = email
 
-
   #----------------------------------
   def gen_priv_key(self):
     keyObj = crypto.PKey()
@@ -347,7 +358,7 @@ class cert_root:
     myHelpers = helpers()
     self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
     self.crtObj.gmtime_adj_notBefore(0)
-    self.crtObj.gmtime_adj_notAfter(self.validity)
+    self.crtObj.gmtime_adj_notAfter(self.renewTime)
 
     self.crtObj.set_issuer(self.crtObj.get_subject())
 
@@ -359,10 +370,15 @@ class cert_root:
     if not self.crtObj or not self.key:
       raise Exception("Please generate or load a certificate and private key first")
     
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        setattr(self.crtObj.get_subject(), crtKey, curVal)
+        
     if days:
       renewPeriod = days*24*60*60
     else:
-      renewPeriod = self.validity
+      renewPeriod = self.renewTime
 
     self.crtObj.gmtime_adj_notBefore(0)
     self.crtObj.gmtime_adj_notAfter(renewPeriod)
@@ -402,7 +418,9 @@ class cert_root:
         curVal = getattr(self.crtObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
         #print(curVal)
-      
+    
+    self.validity = self.crtObj.get_notAfter()
+
     # self.country = self.crtObj.get_subject().C
     # self.state = self.crtObj.get_subject().ST 
     # self.city = self.crtObj.get_subject().L
@@ -411,7 +429,19 @@ class cert_root:
     # self.commonname = self.crtObj.get_subject().CN
     
   #----------------------------------
-  
+  def get_meta_data(self):
+    self.load_cert_from_fs()
+    resObj = {}
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        resObj[classKey] = curVal
+    
+    if self.validity:
+      myHelpers = helpers()
+      resObj["validity"] = myHelpers.asn1_to_datestr(self.validity)
+
+    return resObj
   
   #----------------------------------
   
@@ -440,7 +470,8 @@ class cert_websrv:
     self.load_ca(caname)
     self.set_fqdn(fqdn)
 
-    self.validity = stdCertValidity
+    self.validity = None
+    self.renewTime = stdCertValidity
 
     self.pKey = None
 
@@ -614,7 +645,7 @@ class cert_websrv:
     myHelpers = helpers()
     self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
     self.crtObj.gmtime_adj_notBefore(0)
-    self.crtObj.gmtime_adj_notAfter(self.validity)
+    self.crtObj.gmtime_adj_notAfter(self.renewTime)
 
     self.crtObj.set_issuer(self.caCrtObj.get_subject())
     self.crtObj.set_subject(self.reqObj.get_subject())
@@ -657,6 +688,8 @@ class cert_websrv:
         curVal = getattr(self.crtObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
 
+    self.validity = self.crtObj.get_notAfter()
+  
   #----------------------------------
   def renew_cert(self, days=None):
     if not self.crtObj or not self.key:
@@ -665,7 +698,7 @@ class cert_websrv:
     if days:
       renewPeriod = days*24*60*60
     else:
-      renewPeriod = self.validity
+      renewPeriod = self.renewTime
 
     self.crtObj.gmtime_adj_notBefore(0)
     self.crtObj.gmtime_adj_notAfter(renewPeriod)
@@ -673,14 +706,21 @@ class cert_websrv:
     self.crtObj.set_issuer(self.crtObj.get_subject())
     self.crtObj.set_pubkey(self.key)
     self.crtObj.sign(self.key, 'sha512')
+
+  #----------------------------------
+  def get_meta_data(self):
+    self.load_cert_from_fs()
+    resObj = {}
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        resObj[classKey] = curVal
     
+    if self.validity:
+      myHelpers = helpers()
+      resObj["validity"] = myHelpers.asn1_to_datestr(self.validity)
 
-  #----------------------------------
-  def print_cert_subs(self):
-    common_name = self.crtObj.get_subject().CN
-    print(common_name)
-
-  #----------------------------------
+    return resObj
   
   
   #----------------------------------
