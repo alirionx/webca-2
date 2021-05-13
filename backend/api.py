@@ -291,6 +291,37 @@ def api_cert_put(ca, fqdn):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/cert/<ca>/<fqdn>', methods=["DELETE"])
+def api_cert_delete(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertFs = cert_fs(ca)
+  reqAry = myCertFs.list_certificates()
+  if fqdn not in reqAry:
+    resObj["msg"] = "A certificate for '%s' does not exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  else:
+    myCertFs.delete_cert_all(fqdn)
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
 @app.route('/api/reqs/<ca>', methods=["GET"])
 def api_reqs_get(ca):
   resObj = {
@@ -421,8 +452,36 @@ def api_req_post(ca):
   #---------------------
   return jsonify(resObj), 200
 
+#-------------------------------------------
+@app.route('/api/req/<ca>/<fqdn>', methods=["DELETE"])
+def api_req_delete(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
 
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
 
+  #---------------------
+  myCertFs = cert_fs(ca)
+  reqAry = myCertFs.list_requests()
+  if fqdn not in reqAry:
+    resObj["msg"] = "A cert request for '%s' does not exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  else:
+    myCertFs.delete_cert_req(fqdn)
+
+  #---------------------
+  return jsonify(resObj), 200
 
 #-------------------------------------------
 

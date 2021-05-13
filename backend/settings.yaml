@@ -4,6 +4,11 @@ folders:
   - req
   - crt
 
+endings:
+  cert: ".crt"
+  req: ".csr"
+  key: ".key"
+
 subjects: 
   commonname: "CN"
   country: "C"

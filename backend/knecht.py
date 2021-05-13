@@ -49,7 +49,7 @@ myCert.set_organization("Penner")
 
 myCert.gen_priv_key()
 myCert.create_cert_request()
-#myCert.sign_cert()
+myCert.sign_cert()
 res = myCert.convert_cert_objects_to_string()
 res = myCert.write_cert_objects_to_fs()
 

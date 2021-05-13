@@ -21,6 +21,7 @@ mandaSubjects = objIn["mandaSubjects"]
 stdRootValidity = objIn["stdRootValidity"]
 stdCertValidity = objIn["stdCertValidity"]
 keyLen = objIn["keyLen"]
+endings = objIn["endings"]
 
 
 #Das Ding muss noch weg... in nen config file....
@@ -65,8 +66,8 @@ class cert_fs:
     
     self.caname = caname
     self.capath = os.path.join(baseFolderPath, caname)
-    self.crtpath = os.path.join(self.capath, "root", caname+"_ca.crt")
-    self.keypath = os.path.join(self.capath, "root", caname+"_ca.key")
+    self.crtpath = os.path.join(self.capath, "root", caname+"_ca"+endings["cert"])
+    self.keypath = os.path.join(self.capath, "root", caname+"_ca"+endings["key"])
 
     self.keysPath = os.path.join(self.capath, "key")
     self.reqsPath = os.path.join(self.capath, "req")
@@ -103,7 +104,7 @@ class cert_fs:
 
   #----------------------------------
   def get_req_str(self, fqdn):
-    path = os.path.join(self.reqsPath, fqdn+".csr")
+    path = os.path.join(self.reqsPath, fqdn + endings["req"])
 
     flObj = open(path, "r")
     reqStr = flObj.read()
@@ -113,7 +114,7 @@ class cert_fs:
   #----------------------------------
   def get_cert_str(self, fqdn=None):
     if not fqdn: path = self.crtpath
-    else: path = os.path.join(self.certsPath, fqdn+".crt")
+    else: path = os.path.join(self.certsPath, fqdn + endings["cert"])
 
     flObj = open(path, "rt")
     crtStr = flObj.read()
@@ -123,7 +124,7 @@ class cert_fs:
   #----------------------------------
   def get_key_str(self, fqdn=None):
     if not fqdn: path = self.keypath
-    else: path = os.path.join(self.keysPath, fqdn+".key")
+    else: path = os.path.join(self.keysPath, fqdn + endings["key"])
 
     flObj = open(path, "rt")
     keyStr = flObj.read()
@@ -132,24 +133,41 @@ class cert_fs:
 
   #----------------------------------
   def write_cert_pkey(self, fqdn, pKeyStr):
-    curKeyPath = os.path.join(self.keysPath, fqdn+".key")
+    curKeyPath = os.path.join(self.keysPath, fqdn + endings["key"])
     flObj = open(curKeyPath, "w")
     flObj.write(pKeyStr)
     flObj.close()
 
   #----------------------------------
   def write_cert_req(self, fqdn, reqStr):
-    curReqPath = os.path.join(self.reqsPath, fqdn+".csr")
+    curReqPath = os.path.join(self.reqsPath, fqdn + endings["req"])
     flObj = open(curReqPath, "w")
     flObj.write(reqStr)
     flObj.close()
 
   #----------------------------------
   def write_cert_crt(self, fqdn, crtStr):
-    curCrtPath = os.path.join(self.certsPath, fqdn+".crt")
+    curCrtPath = os.path.join(self.certsPath, fqdn + endings["cert"])
     flObj = open(curCrtPath, "w")
     flObj.write(crtStr)
     flObj.close()
+
+  #----------------------------------
+  def delete_cert_req(self, fqdn):
+    curReqPath = os.path.join(self.reqsPath, fqdn + endings["req"])
+    if os.path.isfile(curReqPath):
+      os.remove(curReqPath)
+
+  #----------------------------------
+  def delete_cert_all(self, fqdn):
+    delPathAry = [
+      os.path.join(self.keysPath, fqdn + endings["key"]),
+      os.path.join(self.reqsPath, fqdn + endings["req"]),
+      os.path.join(self.certsPath, fqdn + endings["cert"]),
+    ]
+    for curPath in delPathAry:
+      if os.path.isfile(curPath):
+        os.remove(curPath)
 
   #----------------------------------
   def list_requests(self):
@@ -158,7 +176,7 @@ class cert_fs:
     for reqFileName in tmpRes:
       tmpFilePath = os.path.join(self.reqsPath, reqFileName)
       if os.path.isfile(tmpFilePath):
-        cn = reqFileName.replace(".csr", "").replace(".pem", "")
+        cn = reqFileName.replace(endings["req"], "")
         resAry.append(cn)
 
     return resAry
@@ -170,7 +188,7 @@ class cert_fs:
     for crtFileName in tmpRes:
       tmpFilePath = os.path.join(self.certsPath, crtFileName)
       if os.path.isfile(tmpFilePath):
-        cn = crtFileName.replace(".crt", "").replace(".pem", "")
+        cn = crtFileName.replace(endings["cert"], "")
         resAry.append(cn)
 
     return resAry
