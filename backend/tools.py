@@ -753,7 +753,7 @@ class cert_websrv:
     self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
     self.reqStr = myCertFs.get_req_str(fqdn=self.commonname)
 
-    self.key = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
 
     for classKey, crtKey in subjects.items():
@@ -767,7 +767,7 @@ class cert_websrv:
     self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
     self.crtStr = myCertFs.get_cert_str(fqdn=self.commonname)
 
-    self.key = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     self.crtObj = crypto.load_certificate(crypto.FILETYPE_PEM, self.crtStr)
     
     for classKey, crtKey in subjects.items():

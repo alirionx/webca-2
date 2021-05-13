@@ -266,6 +266,50 @@ def api_cert_get(ca, fqdn):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/cert/<ca>/<fqdn>', methods=["POST"])
+def api_cert_post(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertFs = cert_fs(ca)
+  reqAry = myCertFs.list_requests()
+  if fqdn not in reqAry:
+    resObj["msg"] = "A cert request for '%s' does not exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  try:
+    myCert = cert_websrv(ca, fqdn)
+    myCert.load_req_from_fs()
+    myCert.sign_cert()
+    myCert.convert_cert_objects_to_string()
+    myCert.write_cert_objects_to_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to sign cert request for '%s'" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  myCertFs.delete_cert_req(fqdn)
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
 @app.route('/api/cert/<ca>/<fqdn>', methods=["PUT"])
 def api_cert_put(ca, fqdn):
   resObj = {
@@ -284,8 +328,12 @@ def api_cert_put(ca, fqdn):
     return jsonify(resObj), 404
 
   #---------------------
-
-
+  myCertFs = cert_fs(ca)
+  crtAry = myCertFs.list_certificates()
+  if fqdn not in crtAry:
+    resObj["msg"] = "A certificate for '%s' does not exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
 
   #---------------------
   return jsonify(resObj), 200
