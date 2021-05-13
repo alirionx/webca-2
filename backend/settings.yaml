@@ -6,7 +6,8 @@ folders:
 
 subjects: 
   commonname: "CN"
-  country: "ST"
+  country: "C"
+  state: "ST"
   city: "L"
   organization: "O"
   unit: "OU"

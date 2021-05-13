@@ -1,5 +1,6 @@
 import os, sys
 import json, yaml
+from flask.globals import request
 import re
 from OpenSSL import crypto, SSL
 import random
@@ -34,7 +35,6 @@ countryCodes = [
   "SG","SH","SI","SJ","SK","SL","SM","SN","SO","SR","SS","ST","SV","SX","SY","TC","TD","TF","TG","TH","TJ","TK","TM","TN","TO","TR","TT","TV",
   "TW","TZ","UA","UG","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"
 ]
-
 
 
 #----------------------------------------------------------
@@ -102,6 +102,15 @@ class cert_fs:
     flObj.close()
 
   #----------------------------------
+  def get_req_str(self, fqdn):
+    path = os.path.join(self.reqsPath, fqdn+".csr")
+
+    flObj = open(path, "r")
+    reqStr = flObj.read()
+    flObj.close()
+    return reqStr
+
+  #----------------------------------
   def get_cert_str(self, fqdn=None):
     if not fqdn: path = self.crtpath
     else: path = os.path.join(self.certsPath, fqdn+".crt")
@@ -143,6 +152,18 @@ class cert_fs:
     flObj.close()
 
   #----------------------------------
+  def list_requests(self):
+    resAry = []
+    tmpRes = os.listdir(self.reqsPath)
+    for reqFileName in tmpRes:
+      tmpFilePath = os.path.join(self.reqsPath, reqFileName)
+      if os.path.isfile(tmpFilePath):
+        cn = reqFileName.replace(".csr", "").replace(".pem", "")
+        resAry.append(cn)
+
+    return resAry
+
+  #----------------------------------
   def list_certificates(self):
     resAry = []
     tmpRes = os.listdir(self.certsPath)
@@ -168,15 +189,21 @@ class meta_collector:
     inf = "meta collector object created"
 
   #----------------------------------
-  def collect_certificate_authorities(self): # Ein Traum in Code!!!!
-    
-    resObj = []
+  def list_cas(self):
     caAry = []
     tmpRes = os.listdir(baseFolderPath)
     for dirname in tmpRes:
       tmpPath = os.path.join(baseFolderPath, dirname)
       if os.path.isdir( tmpPath):
         caAry.append(dirname)
+    
+    return caAry
+
+  #----------------------------------
+  def collect_certificate_authorities(self): # Ein Traum in Code!!!!
+    
+    resObj = []
+    caAry = self.list_cas()
 
     for caname in caAry:
       try:
@@ -188,19 +215,33 @@ class meta_collector:
       
       tmpObj = tmpRootCert.get_meta_data()
       tmpObj["name"] = caname
-      for classKey, crtKey in subjects.items():
-        if hasattr(tmpRootCert, classKey):
-          if getattr(tmpRootCert, classKey):
-            tmpObj[classKey] = getattr(tmpRootCert, classKey)
-      
-      if tmpRootCert.validity:
-        myHelpers = helpers()
-        tmpObj["validity"] = myHelpers.asn1_to_datestr(tmpRootCert.validity)
 
       resObj.append(tmpObj)
 
     return resObj
 
+  #----------------------------------
+  def collect_requests(self, caname):
+    resObj = []
+    
+    myCertFs = cert_fs(caname)
+    reqAry = myCertFs.list_requests()
+    
+    for cn in reqAry:
+      try:
+        tmpReq = cert_websrv(caname, cn)
+        tmpReq.load_req_from_fs()
+      except Exception as e:
+        print(e)
+        continue
+      
+      tmpObj = tmpReq.get_meta_data(req=True)
+      tmpObj["caname"] = caname
+
+      resObj.append(tmpObj)
+
+    return resObj
+    
   #----------------------------------
   def collect_certificates(self, caname):
     resObj = []
@@ -216,11 +257,13 @@ class meta_collector:
         print(e)
         continue
       
-      tmpObj = { "name": cn }
-      for classKey, crtKey in subjects.items():
-        if hasattr(tmpCert, classKey):
-          if getattr(tmpCert, classKey):
-            tmpObj[classKey] = getattr(tmpCert, classKey)
+      tmpObj = tmpCert.get_meta_data()
+      tmpObj["caname"] = caname
+
+      # for classKey, crtKey in subjects.items():
+      #   if hasattr(tmpCert, classKey):
+      #     if getattr(tmpCert, classKey):
+      #       tmpObj[classKey] = getattr(tmpCert, classKey)
 
       resObj.append(tmpObj)
 
@@ -374,7 +417,7 @@ class cert_root:
       curVal = getattr(self, classKey)
       if curVal:
         setattr(self.crtObj.get_subject(), crtKey, curVal)
-        
+
     if days:
       renewPeriod = days*24*60*60
     else:
@@ -445,6 +488,7 @@ class cert_root:
   
   #----------------------------------
   
+
   
   #----------------------------------
 
@@ -548,6 +592,17 @@ class cert_websrv:
     self.email = email
   
   #----------------------------------
+  def set_ipv4(self, ipv4Str):
+    if type(ipv4Str) != str:
+      raise Exception("wrong format. Use string")
+    
+    regEx = re.search('((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$', ipv4Str)
+    if not regEx:
+      raise Exception("invalid email: %s" %ipv4Str)
+
+    self.ipv4 = ipv4Str
+
+  #----------------------------------
   def load_ca(self, caname):
     try:
       myCa = cert_root(caname)
@@ -594,25 +649,24 @@ class cert_websrv:
 
   #----------------------------------
   def create_cert_request(self):
+    
+    missingSubs = []
+    for sub in mandaSubjects:
+      if not getattr(self, sub):
+        missingSubs.append(sub)
+    if len(missingSubs) > 0:
+      raise Exception("please set the following values first: %s" %missingSubs)
+    
+    #------------------
     self.reqObj = crypto.X509Req()
     self.reqObj.set_version(3)
-
 
     for classKey, crtKey in subjects.items():
       curVal = getattr(self, classKey)
       if curVal:
         setattr(self.reqObj.get_subject(), crtKey, curVal)
 
-    # self.reqObj.get_subject().C = self.country
-    # self.reqObj.get_subject().ST = self.state
-    # self.reqObj.get_subject().L = self.city
-    # self.reqObj.get_subject().O = self.organization
-    # self.reqObj.get_subject().OU = self.unit
-    # self.reqObj.get_subject().CN = self.commonname
-    # self.reqObj.get_subject().emailAddress = self.email
-    # test = self.reqObj.get_subject()
-    # res = setattr(self.reqObj.get_subject(), "OU", "Palim")
-
+    #------------------
     sanList = [
       "DNS: {0}".format(self.commonname),
     ]
@@ -621,18 +675,19 @@ class cert_websrv:
     if self.ipv6: 
       sanList.append( "IP: {0}".format(self.ipv6) )
 
-
     sanListStrEnc = ", ".join(sanList).encode()
 
     sanObj = [ 
       crypto.X509Extension(type_name=b"basicConstraints", critical=False, value=b"CA:FALSE" ),
       crypto.X509Extension(type_name=b"keyUsage", critical=False, value=b"digitalSignature" ),
       crypto.X509Extension(type_name=b"extendedKeyUsage", critical=False, value=b"serverAuth" ),
-      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=", ".join(sanList).encode())
+      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=sanListStrEnc)
     ]
     self.reqObj.add_extensions(sanObj)
 
+    #------------------
     self.reqObj.set_pubkey(self.pKey)
+    self.reqObj.sign(self.pKey, 'sha512') # Noch mehr Drecksack!!!!!!!!!!!!!!!!!!!!!!!!
   
   #----------------------------------
   def sign_cert(self):
@@ -675,6 +730,20 @@ class cert_websrv:
     return res
 
   #----------------------------------
+  def load_req_from_fs(self):
+    myCertFs = cert_fs(self.caname)
+    self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+    self.reqStr = myCertFs.get_req_str(fqdn=self.commonname)
+
+    self.key = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
+
+    for classKey, crtKey in subjects.items():
+      if hasattr(self.reqObj.get_subject(), crtKey):
+        curVal = getattr(self.reqObj.get_subject(), crtKey)
+        setattr(self, classKey, curVal)
+
+  #----------------------------------
   def load_cert_from_fs(self):
     myCertFs = cert_fs(self.caname)
     self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
@@ -695,6 +764,11 @@ class cert_websrv:
     if not self.crtObj or not self.key:
       raise Exception("Please generate or load a certificate and private key first")
     
+    for classKey, crtKey in subjects.items():
+      curVal = getattr(self, classKey)
+      if curVal:
+        setattr(self.crtObj.get_subject(), crtKey, curVal)
+
     if days:
       renewPeriod = days*24*60*60
     else:
@@ -708,8 +782,12 @@ class cert_websrv:
     self.crtObj.sign(self.key, 'sha512')
 
   #----------------------------------
-  def get_meta_data(self):
-    self.load_cert_from_fs()
+  def get_meta_data(self, req=False):
+    if req: 
+      self.load_req_from_fs()
+    else:
+      self.load_cert_from_fs()
+
     resObj = {}
     for classKey, crtKey in subjects.items():
       curVal = getattr(self, classKey)

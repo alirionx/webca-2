@@ -15,6 +15,16 @@ caFuncMap = {
   "unit": "set_unit",
   "email": "set_email"
 }
+certFuncMap = {
+  "fqdn": "set_fqdn",
+  "country": "set_country_code",
+  "state": "set_state",
+  "city": "set_city",
+  "organization": "set_organization",
+  "unit": "set_unit",
+  "email": "set_email",
+  "ipv4": "set_ipv4"
+}
 
 #-Build the flask app object---------------------------------------
 #app = Flask(__name__ )
@@ -27,7 +37,7 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 #-The APP Request Handler Area-------------------------------------
 @app.route('/', methods=["GET"])
 def htmo_home_get():
-    return 'Hello from the App root'
+  return 'Hello from the App root'
 
 #------------------------------------------------------------------
 @app.route('/api', methods=["GET"])
@@ -185,6 +195,234 @@ def api_ca_put(ca):
 
   #-----------------------
   return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/certs/<ca>', methods=["GET"])
+def api_certs_get(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  try:
+    resObj["data"] = myMetaColl.collect_certificates(ca)
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "something went wrong: %s" %e
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/cert/<ca>/<fqdn>', methods=["GET"])
+def api_cert_get(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertsFs = cert_fs(ca)
+  crtAry = myCertsFs.list_certificates()
+  if fqdn not in crtAry:
+    resObj["msg"] = "Certificate not exist: '%s'" %fqdn
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCert = cert_websrv(ca, fqdn)
+  try:
+    myCert.load_cert_from_fs()
+    resObj["data"] = myCert.get_meta_data()
+  except:
+    resObj["msg"] = "Failes to load Certificate: '%s'" %fqdn
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/cert/<ca>/<fqdn>', methods=["PUT"])
+def api_cert_put(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+
+
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/reqs/<ca>', methods=["GET"])
+def api_reqs_get(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  try:
+    resObj["data"] = myMetaColl.collect_requests(ca)
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "something went wrong: %s" %e
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/req/<ca>/<fqdn>', methods=["GET"])
+def api_req_get(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertsFs = cert_fs(ca)
+  crtAry = myCertsFs.list_requests()
+  if fqdn not in crtAry:
+    resObj["msg"] = "Cert Request not exist: '%s'" %fqdn
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myReq = cert_websrv(ca, fqdn)
+  try:
+    myReq.load_req_from_fs()
+    resObj["data"] = myReq.get_meta_data(req=True)
+  except:
+    resObj["msg"] = "Failes to load Certificate: '%s'" %fqdn
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/req/<ca>', methods=["POST"]) # Create Cert Request
+def api_req_post(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  postData = request.json
+  if "fqdn" not in postData:
+    resObj["msg"] = "FQDN required for new Cert"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  else:
+    fqdn = postData["fqdn"]
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertFs = cert_fs(ca)
+  reqAry = myCertFs.list_requests()
+  if fqdn in reqAry:
+    resObj["msg"] = "A cert request for '%s' already exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  myCert = cert_websrv(ca, fqdn)
+  for key, funcStr in certFuncMap.items():
+    if key in postData:
+      try:
+        curFunc = getattr(myCert, funcStr)
+        curFunc(postData[key])
+      except Exception as e:
+        print(e)
+        continue
+  
+  #-----------------------
+  try:
+    myCert.gen_priv_key()
+    myCert.create_cert_request()
+    myCert.convert_cert_objects_to_string()
+    myCert.write_cert_objects_to_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to create cert: %s" %e
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
+
+
+
 
 #-------------------------------------------
 
