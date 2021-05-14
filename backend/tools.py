@@ -1,5 +1,6 @@
 import os, sys
 import json, yaml
+import hashlib, binascii
 from flask.globals import request
 import re
 from OpenSSL import crypto, SSL
@@ -10,6 +11,7 @@ from datetime import datetime
 curDir = os.path.dirname(os.path.realpath(__file__)) 
 baseFolderPath = os.path.join(curDir, "certs")
 settingsPath = os.path.join(curDir, "settings.yaml")
+usersPath = os.path.join(curDir, "users.yaml")
 
 flObj = open(settingsPath, "r")
 objIn = yaml.safe_load(flObj)
@@ -58,6 +60,167 @@ class helpers:
     return newDateStr
   
   #----------------------------------
+
+#----------------------------------------------------------
+class user:
+  #----------------------------------
+  valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department"]
+  mandaValsList = ["username", "role", "passwordhash"]
+  roles = ["admin", "caadmin", "requester"]
+  #----------------------------------
+  def __init__(self, username=None):
+    inf = "new user object created"
+    self.check_users_file()
+
+    self.userListId = None
+
+    self.username = None
+    self.email = None
+    self.role = None
+    self.passwordhash = None
+    self.domains = []
+    self.firstname = None
+    self.lastname = None
+    self.department = None
+
+    if username:
+      self.load_user(username)
+
+  #----------------------------------
+  def check_users_file(self):
+    try:
+      flObj = open(usersPath, "r")
+      objIn = yaml.safe_load(flObj)
+      objIn["users"]
+      flObj.close()
+    except Exception as e:
+      #print(e)
+      print("creating new users file")
+      dataObj = {"users": [] }
+      flObj = open(usersPath, "w")
+      yaml.dump(dataObj, flObj, default_flow_style=False)
+      flObj.close()
+
+  #----------------------------------
+  def get_users_object(self):
+    flObj = open(usersPath, "r")
+    objIn = yaml.safe_load(flObj)
+    flObj.close()
+    return objIn["users"]
+
+  #----------------------------------
+  def write_user_object(self, usersObj):
+    dataObj = {"users": usersObj }
+    flObj = open(usersPath, "w")
+    yaml.dump(dataObj, flObj)
+    flObj.close()
+
+  #----------------------------------
+  def get_users_list(self):
+    usersObj = self.get_users_object()
+    usersList = []
+    for user in usersObj:
+      try:
+        usersList.append(user["username"])
+      except:
+        continue
+    
+    return usersList
+
+  #----------------------------------
+  def create_passwordhash(self, password):
+    salt = hashlib.sha256(os.urandom(60)).hexdigest().encode('ascii')
+    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt, 100000)
+    pwdhash = binascii.hexlify(pwdhash)
+    pwdHashRes = (salt + pwdhash).decode('ascii')
+  
+    self.passwordhash = pwdHashRes
+    return pwdHashRes
+
+  #----------------------------------
+  def verify_password(self, passwordhash, password):
+    salt = passwordhash[:64]
+    passwordhash = passwordhash[64:]
+    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt.encode('ascii'), 100000)
+    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
+    return pwdhash == passwordhash
+
+  #----------------------------------
+  def load_user(self, username):
+    usersList = self.get_users_list()
+    if username not in usersList:
+      raise Exception("User '%s' does not exist." %username)
+    else:
+      usersObj = self.get_users_object()
+    
+    i=0
+    for usrObj in usersObj:
+      if username == usrObj["username"]:
+        self.userListId = i
+        break
+      else:
+        i+=1
+
+    for val in self.valList:
+      if val in usrObj:
+        setattr(self, val, usrObj[val])
+
+  #----------------------------------
+  def set_role(self, role):
+    if role not in self.roles:
+      raise Exception("Invalid Role: '%s'." %role)
+    else:
+      self.role = role
+  
+  #----------------------------------
+  def create_user(self):
+    newUsrObj = {}
+    missingVals = []
+    for val in self.mandaValsList:
+      if not getattr(self, val):
+        missingVals.append(val)
+      else:
+        newUsrObj[val] = getattr(self, val)
+    
+    if len(missingVals) > 0:
+      raise Exception("failed to create user. The following values are missing: %s" %missingVals)
+    
+    usersList = self.get_users_list()
+    if self.username in usersList:
+      raise Exception("user '%s' already exist." %self.username)
+    
+    usersObj = self.get_users_object()
+    usersObj.append(newUsrObj)
+    #print(usersObj)
+    self.write_user_object(usersObj)
+
+  #----------------------------------
+  def save_user(self):
+    if not self.userListId:
+      raise Exception("no user loaded...")
+
+    savUsrObj = {}
+    missingVals = []
+    for val in self.mandaValsList:
+      if not getattr(self, val):
+        missingVals.append(val)
+      else:
+        savUsrObj[val] = getattr(self, val)
+    
+    if len(missingVals) > 0:
+      raise Exception("failed to create user. The following values are missing: %s" %missingVals)
+
+    usersObj = self.get_users_object()
+    usersObj[self.userListId] = savUsrObj
+
+    self.write_user_object(usersObj)
+
+  #----------------------------------
+
+  #----------------------------------
+
+  #----------------------------------
+
 
 #----------------------------------------------------------
 class cert_fs:
@@ -409,13 +572,6 @@ class cert_root:
       if curVal:
         setattr(self.crtObj.get_subject(), crtKey, curVal)
 
-    # self.crtObj.get_subject().C = self.country
-    # self.crtObj.get_subject().ST = self.state
-    # self.crtObj.get_subject().L = self.city
-    # self.crtObj.get_subject().O = self.organization
-    # self.crtObj.get_subject().OU = self.unit
-    # self.crtObj.get_subject().CN = self.commonname
-
     myHelpers = helpers()
     self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
     self.crtObj.gmtime_adj_notBefore(0)
@@ -482,13 +638,6 @@ class cert_root:
     
     self.validity = self.crtObj.get_notAfter()
 
-    # self.country = self.crtObj.get_subject().C
-    # self.state = self.crtObj.get_subject().ST 
-    # self.city = self.crtObj.get_subject().L
-    # self.organization = self.crtObj.get_subject().O 
-    # self.unit = self.crtObj.get_subject().OU
-    # self.commonname = self.crtObj.get_subject().CN
-    
   #----------------------------------
   def get_meta_data(self):
     self.load_cert_from_fs()

@@ -1,5 +1,9 @@
 import json
-from tools import cert_fs, meta_collector, cert_root, cert_websrv
+
+import sys
+sys.path.append(".")
+from tools import user, cert_fs, meta_collector, cert_root, cert_websrv
+
 
 # myRootCert = cert_root()
 # myRootCert.set_common_name("iaas-demo.de")
@@ -26,13 +30,13 @@ from tools import cert_fs, meta_collector, cert_root, cert_websrv
 # myRootCert.write_cert_to_fs()
 
 
-myCert = cert_websrv(caname='app-scape.lab', fqdn='smtp.app-scape.lab')
-myCert.set_city("STG")
-myCert.set_email("dquilitzsch@app-scape.lab")
-myCert.set_unit("LAB")
-myCert.set_country_code ("DE")
-myCert.set_state("BW")
-myCert.set_organization("Penner")
+# myCert = cert_websrv(caname='app-scape.lab', fqdn='smtp.app-scape.lab')
+# myCert.set_city("STG")
+# myCert.set_email("dquilitzsch@app-scape.lab")
+# myCert.set_unit("LAB")
+# myCert.set_country_code ("DE")
+# myCert.set_state("BW")
+# myCert.set_organization("Penner")
 
 
 #   "commonname": "set_common_name",
@@ -47,11 +51,11 @@ myCert.set_organization("Penner")
 #print(myCert.commonname)
 #print(myCert.caCrtObj.get_subject().CN)
 
-myCert.gen_priv_key()
-myCert.create_cert_request()
-myCert.sign_cert()
-res = myCert.convert_cert_objects_to_string()
-res = myCert.write_cert_objects_to_fs()
+# myCert.gen_priv_key()
+# myCert.create_cert_request()
+# myCert.sign_cert()
+# res = myCert.convert_cert_objects_to_string()
+# res = myCert.write_cert_objects_to_fs()
 
 # myCert.load_cert_from_fs()
 # myCert.renew_cert(days=10*365)
@@ -67,5 +71,20 @@ res = myCert.write_cert_objects_to_fs()
 # print(json.dumps(res, indent=2))
 
 
-myCert = cert_websrv(caname='app-scape.lab', fqdn='smtp.app-scape.lab')
-myCert.load_req_from_fs()
+# myCert = cert_websrv(caname='app-scape.lab', fqdn='smtp.app-scape.lab')
+# myCert.load_req_from_fs()
+
+
+myUser = user("mrrobot")
+myUser.create_passwordhash("Oviss1234!")
+myUser.save_user()
+#myUser.set_role("admin")
+print(myUser.role, myUser.userListId)
+
+# myUser = user()
+# myUser.username = "penner"
+# myUser.email = "penner@bcl.com"
+# myUser.set_role("caadmin")
+# myUser.create_passwordhash("Penner12434!")
+# print(myUser.passwordhash)
+# myUser.create_user()
