@@ -77,8 +77,11 @@ from tools import user, cert_fs, meta_collector, cert_root, cert_websrv
 
 myUser = user("mrrobot")
 myUser.create_passwordhash("Oviss1234!")
+res = myUser.verify_password("Oviss1234!")
+print( res )
 myUser.save_user()
-#myUser.set_role("admin")
+myUser.set_role("admin")
+
 print(myUser.role, myUser.userListId)
 
 # myUser = user()

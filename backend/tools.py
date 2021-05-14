@@ -138,12 +138,12 @@ class user:
     return pwdHashRes
 
   #----------------------------------
-  def verify_password(self, passwordhash, password):
-    salt = passwordhash[:64]
-    passwordhash = passwordhash[64:]
+  def verify_password(self, password):
+    salt = self.passwordhash[:64]
+    self.passwordhash = self.passwordhash[64:]
     pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt.encode('ascii'), 100000)
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
-    return pwdhash == passwordhash
+    return pwdhash == self.passwordhash
 
   #----------------------------------
   def load_user(self, username):
