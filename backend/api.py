@@ -2,9 +2,25 @@
 from flask import Flask, request, session, redirect, jsonify 
 from flask_cors import CORS 
 import json
+import re
 
 #-Custom Modules and mappers-------
-from tools import cert_fs, meta_collector, cert_root, cert_websrv
+from tools import cert_fs, meta_collector, cert_root, cert_websrv, token
+
+
+#-API Globals and contructors-------------------------------------
+sessVars = ["username", "role"]
+
+roleAccessMap = {
+  "^\/api\/cas": { 
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "roles": ["admin"]
+  },
+  "^\/api\/ca\/.*": { 
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "roles": ["admin", "caadmin"]
+  },
+}
 
 caFuncMap = {
   "commonname": "set_common_name",
@@ -26,6 +42,7 @@ certFuncMap = {
   "ipv4": "set_ipv4"
 }
 
+
 #-Build the flask app object---------------------------------------
 #app = Flask(__name__ )
 app = Flask(__name__, static_url_path='', static_folder='dist' )
@@ -33,6 +50,30 @@ app.secret_key = "changeit"
 app.debug = True
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+#-Access Management Section----------------------------------------
+@app.before_first_request
+def before_everything():
+  inf = "Do something here???"
+  
+#--------------------------------
+@app.before_request
+def check_before_every_request():
+  for var in sessVars:
+    if var not in session:
+      session[var] = None
+
+  for reStr, paras in roleAccessMap.items():
+    reChk = re.search(reStr, request.path)
+    if reChk and request.method in paras["methods"] and session["role"] not in paras["roles"]:
+      resObj = {
+        "path": request.path,
+        "method": request.method,
+        "status": 401,
+        "msg": "Access Denied"
+      }
+      return jsonify(resObj), 401
+
+  
 
 #-The APP Request Handler Area-------------------------------------
 @app.route('/', methods=["GET"])
@@ -534,6 +575,43 @@ def api_req_delete(ca, fqdn):
 #-------------------------------------------
 
 #-------------------------------------------
+
+#-The Token Section-----------------------------------------------
+@app.route('/api/token/renew', methods=["POST"])
+def api_token_cert_renew():
+
+  try:
+    jwt = request.headers["jwt"]
+  except:
+    return "'jwt' Token missing in Headers", 400
+
+  jwt = jwt.replace(" ", "")
+  splt = jwt.split(":")
+  fqdn = splt[0]
+  tokenStr = splt[1]
+  
+  myToken = token()
+  res = myToken.validate_token(tokenStr, fqdn)
+  if not res:
+    return "Invalid token or FQDN", 401
+  
+  try:
+    caname = res["caname"]
+    fqdn = res["fqdn"]
+  except:
+    return "Invalid payload", 400
+
+  myCert = cert_websrv(caname=caname, fqdn=fqdn)
+  myCert.load_cert_from_fs()
+  myCert.renew_cert(days=30)
+  myCert.write_cert_objects_to_fs()
+
+  return str(res), 200
+
+#-------------------------------------------
+
+#-------------------------------------------
+
 
 #-App Runner------------------------------------------------------
 if __name__ == "__main__":

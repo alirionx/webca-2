@@ -2,7 +2,7 @@ import json
 
 import sys
 sys.path.append(".")
-from tools import user, cert_fs, meta_collector, cert_root, cert_websrv
+from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
 
 
 # myRootCert = cert_root()
@@ -75,19 +75,40 @@ from tools import user, cert_fs, meta_collector, cert_root, cert_websrv
 # myCert.load_req_from_fs()
 
 
-myUser = user("mrrobot")
-myUser.create_passwordhash("Oviss1234!")
-res = myUser.verify_password("Oviss1234!")
-print( res )
-myUser.save_user()
-myUser.set_role("admin")
+# myUser = user("mrrobot")
+# myUser.create_passwordhash("Oviss1234!")
+# res = myUser.verify_password("Oviss1234!")
+# print( res )
+# myUser.save_user()
+# myUser.set_role("admin")
 
-print(myUser.role, myUser.userListId)
+# print(myUser.userListId)
 
-# myUser = user()
+# print(myUser.get_meta_data(True))
+
+
+#myUser = user("penner")
 # myUser.username = "penner"
 # myUser.email = "penner@bcl.com"
 # myUser.set_role("caadmin")
 # myUser.create_passwordhash("Penner12434!")
 # print(myUser.passwordhash)
 # myUser.create_user()
+
+#myUser.delete_user()
+
+#myToken = token("app-scape.lab", "smtp.app-scape.lab")
+myToken = token()
+myToken.set_ca_fqdn("app-scape.lab", "www.app-scape.lab")
+#myToken.load_token("app-scape.lab", "smtp.app-scape.lab")
+myToken.create_token_string()
+print(myToken.token)
+myToken.save_token()
+
+# myToken = token("app-scape.lab", "www.app-scape.lab")
+# myToken.delete_token()
+
+# tokenStr = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjYSI6ImFwcC1zY2FwZS5sYWIiLCJmcWRuIjoic210cC5hcHAtc2NhcGUubGFiIn0.G2ICMitYSP0aSVjKyg-4vTttYMGUBhzE051EBkFu_SI"
+# myToken.validate_token(tokenStr, "smtp.app-scape.lab")
+
+

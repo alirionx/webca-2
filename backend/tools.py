@@ -5,13 +5,14 @@ from flask.globals import request
 import re
 from OpenSSL import crypto, SSL
 import random
+import jwt
 from datetime import datetime
 
 #-Tools Globals------------------------------------
 curDir = os.path.dirname(os.path.realpath(__file__)) 
 baseFolderPath = os.path.join(curDir, "certs")
 settingsPath = os.path.join(curDir, "settings.yaml")
-usersPath = os.path.join(curDir, "users.yaml")
+accessFilePath = os.path.join(curDir, "access.yaml")
 
 flObj = open(settingsPath, "r")
 objIn = yaml.safe_load(flObj)
@@ -60,6 +61,25 @@ class helpers:
     return newDateStr
   
   #----------------------------------
+  def check_access_file(self):
+    try:
+      flObj = open(accessFilePath, "r")
+      objIn = yaml.safe_load(flObj)
+      objIn["users"]
+      objIn["tokens"]
+      flObj.close()
+    except Exception as e:
+      #print(e)
+      print("creating new access file")
+      dataObj = {
+        "users": [],
+        "tokens": []
+      }
+      flObj = open(accessFilePath, "w")
+      yaml.dump(dataObj, flObj, default_flow_style=False)
+      flObj.close()
+
+  #----------------------------------
 
 #----------------------------------------------------------
 class user:
@@ -70,7 +90,8 @@ class user:
   #----------------------------------
   def __init__(self, username=None):
     inf = "new user object created"
-    self.check_users_file()
+    myHelpers = helpers()
+    myHelpers.check_access_file()
 
     self.userListId = None
 
@@ -87,23 +108,8 @@ class user:
       self.load_user(username)
 
   #----------------------------------
-  def check_users_file(self):
-    try:
-      flObj = open(usersPath, "r")
-      objIn = yaml.safe_load(flObj)
-      objIn["users"]
-      flObj.close()
-    except Exception as e:
-      #print(e)
-      print("creating new users file")
-      dataObj = {"users": [] }
-      flObj = open(usersPath, "w")
-      yaml.dump(dataObj, flObj, default_flow_style=False)
-      flObj.close()
-
-  #----------------------------------
   def get_users_object(self):
-    flObj = open(usersPath, "r")
+    flObj = open(accessFilePath, "r")
     objIn = yaml.safe_load(flObj)
     flObj.close()
     return objIn["users"]
@@ -111,7 +117,7 @@ class user:
   #----------------------------------
   def write_user_object(self, usersObj):
     dataObj = {"users": usersObj }
-    flObj = open(usersPath, "w")
+    flObj = open(accessFilePath, "w")
     yaml.dump(dataObj, flObj)
     flObj.close()
 
@@ -216,9 +222,167 @@ class user:
     self.write_user_object(usersObj)
 
   #----------------------------------
+  def delete_user(self ):
+    if not self.userListId:
+      raise Exception("no user loaded...")
+    
+    usersObj = self.get_users_object()
+    del usersObj[self.userListId]
+
+    self.write_user_object(usersObj)
+
+  #----------------------------------
+  def get_meta_data(self, passwordhash=False):
+    if not self.userListId:
+      raise Exception("no user loaded...")
+    
+    usrObj = {}
+    for val in self.valList:
+      if getattr(self, val):
+        usrObj[val] = getattr(self, val)
+    
+    if not passwordhash:
+      del usrObj['passwordhash']
+
+    return usrObj
 
   #----------------------------------
 
+  #----------------------------------
+
+
+#----------------------------------------------------------
+class token:
+  #----------------------------------
+  def __init__(self, ca=None, fqdn=None):
+    inf = "new token object created"
+    myHelpers = helpers()
+    myHelpers.check_access_file()
+
+    self.tokensArrayId = None
+
+    self.ca = None
+    self.fqdn = None
+    self.token = None
+
+    if ca and fqdn: self.load_token(ca, fqdn)
+
+  #----------------------------------
+  def get_ca_fqdn_list(self):
+    flObj = open(accessFilePath, "r")
+    objIn = yaml.safe_load(flObj)
+    flObj.close()
+    tokensAry = objIn["tokens"]
+    caTokensList = []
+    for token in tokensAry:
+      caTokensList.append( {token["ca"]: token["fqdn"]} )
+
+    return caTokensList
+  
+  #----------------------------------
+  def get_tokens_array(self):
+    flObj = open(accessFilePath, "r")
+    objIn = yaml.safe_load(flObj)
+    flObj.close()
+    tokensAry = objIn["tokens"]
+
+    return tokensAry
+  
+  #----------------------------------
+  def save_tokens_array(self, tokensAry):
+    flObj = open(accessFilePath, "r")
+    objIn = yaml.safe_load(flObj)
+    flObj.close()
+
+    objIn["tokens"] = tokensAry
+
+    flObj = open(accessFilePath, "w")
+    yaml.dump(objIn, flObj)
+    flObj.close()
+  
+  #----------------------------------
+  def load_token(self, ca, fqdn):
+    caTokensList = self.get_ca_fqdn_list()
+    if {ca: fqdn} not in caTokensList:
+      raise Exception("token for '%s' does not exist." %{ca: fqdn})
+
+    tokensAry = self.get_tokens_array()
+    i = 0
+    for token in tokensAry:
+      if token["ca"] == ca and token["fqdn"] == fqdn:
+        self.tokensArrayId = i
+        self.ca = token["ca"]
+        self.fqdn = token["fqdn"]
+        self.token = token["token"]
+        break
+      else:
+        i+=1
+
+  #----------------------------------
+  def set_ca_fqdn(self, ca, fqdn):
+    myMetaColl = meta_collector()
+    caList = myMetaColl.list_cas()
+    if ca not in caList:
+      raise Exception("Invalid root ca: '%s'."%ca)
+    
+    myCertFs = cert_fs(ca)
+    fqdnList = myCertFs.list_certificates()
+    if fqdn not in fqdnList:
+      raise Exception("cert for '%s' does not exist."%fqdn)
+
+    self.ca = ca
+    self.fqdn = fqdn
+
+  #----------------------------------
+  def create_token_string(self):
+    if not self.ca or not self.fqdn:
+      raise Exception("Please define ca and fqdn first")
+
+    payload = {
+      "caname": self.ca,
+      "fqdn": self.fqdn
+    }
+    self.token = jwt.encode(payload, self.fqdn, algorithm="HS256").decode()
+
+  #----------------------------------
+  def save_token(self):
+    if not self.ca or not self.fqdn or not self.token:
+      raise Exception("No token string to save... create one first.")
+
+    tokenObj = {
+      "fqdn": self.fqdn,
+      "ca": self.ca,
+      "token": self.token
+    }
+    tokensAry = self.get_tokens_array()
+    if self.tokensArrayId == None:
+      caTokensList = self.get_ca_fqdn_list()
+      if {self.ca: self.fqdn} in caTokensList:
+        raise Exception("token for '%s' already exist." %{self.ca: self.fqdn})
+      tokensAry.append(tokenObj)
+    else:
+      tokensAry[self.tokensArrayId] = tokenObj
+
+    self.save_tokens_array(tokensAry)
+  
+  #----------------------------------
+  def delete_token(self):
+    if self.tokensArrayId == None:
+      raise Exception("No token loaded. Please load one first.")
+    
+    tokenAry = self.get_tokens_array()
+    del tokenAry[self.tokensArrayId]
+    self.save_tokens_array(tokenAry)
+
+  #----------------------------------
+  def validate_token(self, tokenStr, fqdn):
+    try:
+      res = jwt.decode(tokenStr, fqdn, algorithms=["HS256"])
+      return res
+    except Exception as e:
+      print(e)
+      return False    
+  
   #----------------------------------
 
 
@@ -928,7 +1092,7 @@ class cert_websrv:
   
   #----------------------------------
   def renew_cert(self, days=None):
-    if not self.crtObj or not self.key:
+    if not self.crtObj or not self.pKey:
       raise Exception("Please generate or load a certificate and private key first")
     
     for classKey, crtKey in subjects.items():
@@ -945,8 +1109,8 @@ class cert_websrv:
     self.crtObj.gmtime_adj_notAfter(renewPeriod)
 
     self.crtObj.set_issuer(self.crtObj.get_subject())
-    self.crtObj.set_pubkey(self.key)
-    self.crtObj.sign(self.key, 'sha512')
+    self.crtObj.set_pubkey(self.pKey)
+    self.crtObj.sign(self.pKey, 'sha512')
 
   #----------------------------------
   def get_meta_data(self, req=False):
