@@ -54,12 +54,16 @@ class helpers:
     return ranSn
   
   #----------------------------------
-  def asn1_to_datestr(self, asn, fmt='%Y-%d-%m'):
+  def asn1_to_datestr(self, asn, fmt='%Y-%m-%d'):
     tmpDateStr = asn.decode()[:8]
-    tmpDate = datetime.strptime(tmpDateStr, '%Y%d%m')
-    newDateStr = tmpDate.strftime(fmt)
-    return newDateStr
-  
+    try:
+      tmpDate = datetime.strptime(tmpDateStr, '%Y%m%d')
+      newDateStr = tmpDate.strftime(fmt)
+      return newDateStr
+    except Exception as e:
+      print(e)
+      return tmpDateStr
+
   #----------------------------------
   def check_access_file(self):
     try:
@@ -116,9 +120,13 @@ class user:
 
   #----------------------------------
   def write_user_object(self, usersObj):
-    dataObj = {"users": usersObj }
+    flObj = open(accessFilePath, "r")
+    objIn = yaml.safe_load(flObj)
+    flObj.close()
+
+    objIn["users"] = usersObj
     flObj = open(accessFilePath, "w")
-    yaml.dump(dataObj, flObj)
+    yaml.dump(objIn, flObj)
     flObj.close()
 
   #----------------------------------
@@ -202,7 +210,7 @@ class user:
 
   #----------------------------------
   def save_user(self):
-    if not self.userListId:
+    if self.userListId == None:
       raise Exception("no user loaded...")
 
     savUsrObj = {}
@@ -223,7 +231,7 @@ class user:
 
   #----------------------------------
   def delete_user(self ):
-    if not self.userListId:
+    if self.userListId == None:
       raise Exception("no user loaded...")
     
     usersObj = self.get_users_object()
@@ -233,7 +241,7 @@ class user:
 
   #----------------------------------
   def get_meta_data(self, passwordhash=False):
-    if not self.userListId:
+    if self.userListId == None:
       raise Exception("no user loaded...")
     
     usrObj = {}
@@ -242,7 +250,10 @@ class user:
         usrObj[val] = getattr(self, val)
     
     if not passwordhash:
-      del usrObj['passwordhash']
+      try:
+        del usrObj['passwordhash']
+      except:
+        inf = "never mind"
 
     return usrObj
 
@@ -1073,7 +1084,7 @@ class cert_websrv:
       if hasattr(self.reqObj.get_subject(), crtKey):
         curVal = getattr(self.reqObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
-
+    
   #----------------------------------
   def load_cert_from_fs(self):
     myCertFs = cert_fs(self.caname)
@@ -1128,7 +1139,7 @@ class cert_websrv:
     if self.validity:
       myHelpers = helpers()
       resObj["validity"] = myHelpers.asn1_to_datestr(self.validity)
-
+      
     return resObj
   
   

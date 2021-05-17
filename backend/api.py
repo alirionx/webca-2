@@ -1,11 +1,12 @@
 #-Module imports--------------------------------------------------
 from flask import Flask, request, session, redirect, jsonify 
 from flask_cors import CORS 
+from flask_httpauth import HTTPBasicAuth
 import json
 import re
 
 #-Custom Modules and mappers-------
-from tools import cert_fs, meta_collector, cert_root, cert_websrv, token
+from tools import cert_fs, meta_collector, cert_root, cert_websrv, token, user
 
 
 #-API Globals and contructors-------------------------------------
@@ -46,9 +47,10 @@ certFuncMap = {
 #-Build the flask app object---------------------------------------
 #app = Flask(__name__ )
 app = Flask(__name__, static_url_path='', static_folder='dist' )
-app.secret_key = "changeit"
+app.secret_key = "changeitxx"
 app.debug = True
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+auth = HTTPBasicAuth()
 
 #-Access Management Section----------------------------------------
 @app.before_first_request
@@ -58,6 +60,9 @@ def before_everything():
 #--------------------------------
 @app.before_request
 def check_before_every_request():
+  
+  #print(str(session))
+  
   for var in sessVars:
     if var not in session:
       session[var] = None
@@ -73,11 +78,33 @@ def check_before_every_request():
       }
       return jsonify(resObj), 401
 
+#--------------------------------
+@auth.verify_password
+def base_auth_login(username, password):
+
+  if username == "" or password == "":
+    return False
+
+  try:
+    myUser = user(username)
+  except Exception as e:
+    print(e)
+    return False
+  
+  res = myUser.verify_password(password)
+  if not res:
+    return False
+  
+  session["username"] = username
+  session["role"] = myUser.role
+  return username
+
+#--------------------------------
   
 
 #-The APP Request Handler Area-------------------------------------
 @app.route('/', methods=["GET"])
-def htmo_home_get():
+def html_home_get():
   return 'Hello from the App root'
 
 #------------------------------------------------------------------
@@ -90,6 +117,20 @@ def api_root_get():
     "message": "Hello from the API"
   }
   return jsonify(testObj), 200
+
+#-------------------------------------------
+@app.route('/api/login', methods=["POST"])
+@auth.login_required
+def api_login_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "username": session["username"],
+    "role": session["role"]
+  }
+
+  return resObj, 200
 
 #-------------------------------------------
 @app.route('/api/cas', methods=["GET"])
@@ -256,6 +297,7 @@ def api_certs_get(ca):
     return jsonify(resObj), 404
 
   #---------------------
+  resObj["data"] = myMetaColl.collect_certificates(ca)
   try:
     resObj["data"] = myMetaColl.collect_certificates(ca)
   except Exception as e:
@@ -577,9 +619,21 @@ def api_req_delete(ca, fqdn):
 #-------------------------------------------
 
 #-The Token Section-----------------------------------------------
+@app.route('/api/token/<ca>/<fqdn>', methods=["GET"])
+@auth.login_required
+def api_token_get(ca, fqdn):
+  try:
+    myToken = token(ca, fqdn)
+    return myToken.token
+  except Exception as e:
+    #print(e)
+    errStr = str(e)
+    return errStr, 404
+  
+
+#-------------------------------------------
 @app.route('/api/token/renew', methods=["POST"])
 def api_token_cert_renew():
-
   try:
     jwt = request.headers["jwt"]
   except:
@@ -609,6 +663,8 @@ def api_token_cert_renew():
   return str(res), 200
 
 #-------------------------------------------
+
+
 
 #-------------------------------------------
 

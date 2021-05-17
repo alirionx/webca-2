@@ -87,7 +87,7 @@ from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
 # print(myUser.get_meta_data(True))
 
 
-#myUser = user("penner")
+# myUser = user("penner")
 # myUser.username = "penner"
 # myUser.email = "penner@bcl.com"
 # myUser.set_role("caadmin")
@@ -97,13 +97,13 @@ from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
 
 #myUser.delete_user()
 
-#myToken = token("app-scape.lab", "smtp.app-scape.lab")
-myToken = token()
-myToken.set_ca_fqdn("app-scape.lab", "www.app-scape.lab")
-#myToken.load_token("app-scape.lab", "smtp.app-scape.lab")
-myToken.create_token_string()
-print(myToken.token)
-myToken.save_token()
+# myToken = token("app-scape.lab", "smtp.app-scape.lab")
+# myToken = token()
+# myToken.set_ca_fqdn("app-scape.lab", "www.app-scape.lab")
+# myToken.load_token("app-scape.lab", "smtp.app-scape.lab")
+# myToken.create_token_string()
+# print(myToken.token)
+# myToken.save_token()
 
 # myToken = token("app-scape.lab", "www.app-scape.lab")
 # myToken.delete_token()
@@ -112,3 +112,7 @@ myToken.save_token()
 # myToken.validate_token(tokenStr, "smtp.app-scape.lab")
 
 
+myUser = user("dquilitzsch")
+myUser.create_passwordhash("Dodger08398!")
+print(myUser.passwordhash)
+myUser.save_user()
