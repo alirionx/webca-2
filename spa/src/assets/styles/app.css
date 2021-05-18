@@ -1,0 +1,51 @@
+body{
+  background-image: linear-gradient(#f6f6f6 100%, #fff 100%);
+  background-repeat: no-repeat;
+  background-color: #f6f6f6;
+  *font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  padding: 120px 8px 8px 8px;
+  min-height:80vh;
+  min-width: 800px;
+}
+.headBlock{
+  position: fixed;
+  left:0px;
+  top: 0px;
+  height:100px;
+  width: 100%;
+  background-color: #000;
+  padding:4px;
+  text-align: center;
+  color:#fff;
+}
+.headBlock .headLine{
+  font-size: 20px;
+  color: #fff;
+  line-height: 88px;
+  padding-right:30px
+}
+.menuBar{
+  position: absolute;
+  bottom: 4px;
+  right: 24px;
+}
+.menuBar div{
+  display: inline-block;
+  font-size: 14px;
+  *font-weight: bold;
+  color: #fff;
+  text-align: center;
+  min-width: 100px;
+  cursor: pointer;
+  border-right: 2px solid #fff;
+}
+.menuBar div:first-child{
+  border-left: 2px solid #fff;
+}
+.menuBar div:hover{
+  text-decoration: underline;
+}

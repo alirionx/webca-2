@@ -56,6 +56,8 @@ auth = HTTPBasicAuth()
 @app.before_first_request
 def before_everything():
   inf = "Do something here???"
+  session["username"] = None
+  session["role"] = None
   
 #--------------------------------
 @app.before_request
@@ -117,6 +119,19 @@ def api_root_get():
     "message": "Hello from the API"
   }
   return jsonify(testObj), 200
+
+#-------------------------------------------
+@app.route('/api/userstate', methods=["GET"])
+def api_userstate_get():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "username": session["username"],
+    "role": session["role"]
+  }
+
+  return resObj, 200
 
 #-------------------------------------------
 @app.route('/api/login', methods=["POST"])
