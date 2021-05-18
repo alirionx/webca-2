@@ -24,9 +24,11 @@ body{
 }
 .headBlock .headLine{
   font-size: 20px;
+  text-align: left;
   color: #fff;
-  line-height: 88px;
-  padding-right:30px
+  line-height: 100px;
+  padding-left:5%;
+  white-space: nowrap;
 }
 .menuBar{
   position: absolute;
@@ -48,4 +50,67 @@ body{
 }
 .menuBar div:hover{
   text-decoration: underline;
+}
+
+.stdForm{
+  display: table;
+  margin: 6vh auto auto auto;
+  min-width:550px;
+  min-height:100px;
+  text-align:left;
+  padding:24px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  box-shadow: 0px 8px 14px #555;
+  background-color:#f6f6f6;
+  text-align: center;
+}
+.stdForm .hl{
+  padding:1.5%;
+  margin-bottom: 16px;
+  text-align: center;
+  background-color: #000;
+  color:#fff;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 3px;
+}
+.stdForm input[type=text],input[type=password]{
+  width: 95%;
+  padding: 2%;
+  margin: 10px 0 10px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+.stdForm ::placeholder{
+  color: #aaa;
+}
+
+.stdForm .txtCenter{
+  text-align: center;
+}
+
+.stdForm .btnFrame{
+  padding-top:20px;
+  text-align: center;
+}
+.stdForm .btnFrame button{
+  padding:1.5%;
+  margin: 0 14px 0 14px;
+  min-width: 110px;
+  background-color: #333;
+  color:#fff;
+  font-weight: bold;
+  *box-shadow: 0px 1px 3px #444;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+}
+.stdForm .btnFrame button:hover{
+  background-color: #000;
 }

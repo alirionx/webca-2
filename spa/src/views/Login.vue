@@ -1,12 +1,25 @@
 <template>
   <form @submit.prevent="submit">
   <div class="stdForm">
+    
     <div class="hl">WebUI Login</div>
-    <input type="text" v-model="username" />
-    <input type="password" v-model="password" />
+    
+    <input 
+      type="text" class="txtCenter" 
+      placeholder="Username" 
+      v-model="username" 
+      required />
+    <input 
+      type="password" class="txtCenter" 
+      placeholder="Password" 
+      v-model="password" 
+      v-on:keyup.enter="submit" 
+      required />
+
     <div class="btnFrame">
       <button>Submit</button>
     </div>
+
   </div>
   </form>
 </template>
