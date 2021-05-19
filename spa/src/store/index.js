@@ -13,6 +13,13 @@ export default createStore({
       //console.log(obj)
       state.username = obj.username;
       state.role = obj.role;
+    },
+    reset_username_role(state){
+      state.username = null;
+      state.role = null;
+    },
+    reset_sys_msg(state){
+      state.sysMsg = null;
     }
   },
   actions: {
@@ -30,6 +37,13 @@ export default createStore({
         // handle error
         console.log(err.response);
       })
+    },
+
+    trigger_reset_sys_msg({ commit }, tm=2000){
+      var fwFunc = ()=>{ commit("reset_sys_msg") }
+      setTimeout(function(){
+        fwFunc();
+      }, tm)
     }
 
   },

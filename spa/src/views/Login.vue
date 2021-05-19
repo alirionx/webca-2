@@ -43,11 +43,11 @@ export default {
   methods:{
     submit(){
       console.log(this.username, this.password);
-      let auth= {
+      let data = {
         username: this.username,
         password: this.password
       }
-      axios.post('/api/login', {}, {auth:auth} ).then(response => { 
+      axios.post('/api/login/json', data, ).then(response => { 
         //this.loader = false;
         console.log(response.data);
         location.hash = "/"
@@ -56,6 +56,9 @@ export default {
         //this.loader = false;
         //console.log(error);
         this.$store.state.sysMsg = "Login Failed";
+        this.$store.dispatch("trigger_reset_sys_msg", 3000);
+        this.username = "";
+        this.password = "";
       });
     }
   },

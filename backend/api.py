@@ -148,6 +148,45 @@ def api_login_post():
   return resObj, 200
 
 #-------------------------------------------
+@app.route('/api/login/json', methods=["POST"])
+def api_login_post_json():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200
+  }
+  #-----------------------
+  postIn = request.json
+  res = base_auth_login(postIn["username"], postIn["password"])
+  if not res:
+    resObj["msg"] = "Login failed"
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+  
+  #-----------------------
+  resObj["username"] = session["username"],
+  resObj["role"] = session["role"]
+
+  return resObj, 200
+
+#-------------------------------------------
+@app.route('/api/logout', methods=["POST"])
+def api_logout_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+  }
+
+  #-----------------------
+  session["username"] = None
+  session["role"] = None
+
+  return resObj, 200
+
+#-------------------------------------------
+
+#-------------------------------------------
 @app.route('/api/cas', methods=["GET"])
 def api_cas_get():
   resObj = {

@@ -21,10 +21,30 @@ const routes = [
     }
   },
   {
-    path: '/cas',
-    name: 'Cas',
+    path: '/authorities',
+    name: 'Authorities',
     component: function () {
-      return import('../views/Cas.vue')
+      return import('../views/Authorities.vue')
+    },
+    meta:{
+      roles: ["admin"]
+    }
+  },
+  {
+    path: '/certificates',
+    name: 'Certificates',
+    component: function () {
+      return import('../views/Certificates.vue')
+    },
+    meta:{
+      roles: ["admin"]
+    }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: function () {
+      return import('../views/Settings.vue')
     },
     meta:{
       roles: ["admin"]
@@ -46,7 +66,8 @@ router.beforeEach(async(to, from, next) =>{
     await store.dispatch("check_user_state")
     //console.log(store.state.role)
   }
-  if(to.name != "Login" && to.meta.roles!=undefined && !to.meta.roles.includes(store.state.role)){
+  //if(to.name != "Login" && to.meta.roles!=undefined && !to.meta.roles.includes(store.state.role)){
+  if(to.name != "Login" && !store.state.role){
     next({ name: 'Login' })
   }
   else{
