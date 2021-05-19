@@ -43,13 +43,27 @@ export default {
   methods:{
     submit(){
       console.log(this.username, this.password);
+      let auth= {
+        username: this.username,
+        password: this.password
+      }
+      axios.post('/api/login', {}, {auth:auth} ).then(response => { 
+        //this.loader = false;
+        console.log(response.data);
+        location.hash = "/"
+      })
+      .catch(error => {
+        //this.loader = false;
+        //console.log(error);
+        this.$store.state.sysMsg = "Login Failed";
+      });
     }
   },
   created: function(){
-    console.log("created");
+    
   },
   mounted: function(){
-    console.log("mounted");
+    
   }
 
 }

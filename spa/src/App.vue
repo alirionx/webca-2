@@ -5,6 +5,7 @@
     </div>
     <NavMenu />
   </div>
+  <h2 v-if="$store.state.sysMsg">{{$store.state.sysMsg}}</h2>
   <router-view />
 </template>
 
