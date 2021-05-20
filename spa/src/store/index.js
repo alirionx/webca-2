@@ -7,6 +7,8 @@ export default createStore({
     username: null,
     role: null,
     sysMsg: null,
+    sysConfirmFw: null,
+    sysConfirmMsg: null
   },
   mutations: {
     set_username_role(state, obj){
@@ -20,6 +22,10 @@ export default createStore({
     },
     reset_sys_msg(state){
       state.sysMsg = null;
+    },
+    reset_confirm_msg(state){
+      state.sysConfirmFw = null;
+      state.sysConfirmMsg = null;
     }
   },
   actions: {

@@ -1,30 +1,36 @@
 <template>
-  <div class="headBlock">
-    <div class="headLine">
-      Web-based Certificate Authority Administration
+  <div class="mainApp">
+    <div class="headBlock">
+      <div class="headLine">
+        Web-based Certificate Authority Administration
+      </div>
+      <NavMenu v-if="$store.state.role" />
     </div>
-    <NavMenu v-if="$store.state.role" />
-  </div>
-  
-  <div class="msgPop" v-if="$store.state.sysMsg">
-    <div class="box">
-      {{$store.state.sysMsg}}
-      <div class="xBtn" @click="$store.commit('reset_sys_msg')">X</div>
+    
+    <div class="msgPop" v-if="$store.state.sysMsg">
+      <div class="box">
+        {{$store.state.sysMsg}}
+        <div class="xBtn" @click="$store.commit('reset_sys_msg')">X</div>
+      </div>
     </div>
-  </div>
 
-  <router-view />
+    <router-view />
+    <ConfirmBox />
+
+  </div>
 </template>
 
 <script>
 //import axios from 'axios'
 import store from './store'
 import NavMenu from './components/NavMenu.vue'
+import ConfirmBox from './components/ConfirmBox.vue'
 
 export default {
  name: 'App',
   components:{
-    NavMenu
+    NavMenu,
+    ConfirmBox
   },
   data(){
     return{

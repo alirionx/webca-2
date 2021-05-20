@@ -55,7 +55,7 @@ export default {
         },
         {
           txt: "delete",
-          func: (idx)=>{ console.log(idx, 'delete')}
+          func: (idx)=>{ this.call_delete(idx) }
         }
       ],
       activeMenu: null,
@@ -63,66 +63,43 @@ export default {
         {
           col: "commonname",
           hl: "Common Name",
-          typ: "text",
-          manda: true,
-          pattern: "[a-z/.-]+[a-z]{2}$",
           align: "left"
         },
         {
           col: "country",
           hl: "Country",
-          typ: "dropdown",
-          dd:["DE", "AU", "US", "UK"],
-          manda: true,
           align: "left"
         },
         {
           col: "state",
           hl: "State",
-          typ: "text",
-          manda: true,
           align: "left"
         },
         {
           col: "city",
           hl: "City",
-          typ: "text",
-          manda: true,
           align: "left"
         },
         {
           col: "organization",
           hl: "Organization",
-          typ: "text",
-          manda: true,
           align: "left"
         },
         {
           col: "unit",
           hl: "Unit",
-          typ: "text",
-          manda: false,
           align: "left"
         },
         {
           col: "email",
           hl: "Responsible Email",
-          typ: "text",
-          manda: true,
-          pattern: "[a-z1-9.\-]+[@][a-z1-9]+[.][a-z]{2,4}$",
           align: "left"
         },
         {
           col: "validity",
           hl: "Validity",
-          typ: "date",
-          manda: true,
           align: "center"
         }
-        
-
-
-        
       ],
       data: []
     }
@@ -144,7 +121,28 @@ export default {
     },
     reset_active_menu(){
       this.activeMenu = null;
+    },
+
+    call_delete(idx){
+      this.$store.state.sysConfirmFw = ()=>{console.log("del")}
+      this.$store.state.sysConfirmMsg = "Do you really want to delete the root certificate authority: " + this.data[idx].commonname;
+      this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
+    },
+    do_delete(idx){
+      var caCn = this.data[idx].commonname;
+      axios.delete('/api/ca/'+caCn)
+      .then((response)=> {
+        console.log(response.data);
+        this.call_authorities();
+      })
+      .catch((err)=> {
+        // handle error
+        console.log(err.response);
+        this.$store.state.sysMsg = "Failed to delete ca: "+caCn;
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
     }
+
   },
   created: function(){
     //console.log("Authorities created");

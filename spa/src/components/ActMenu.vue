@@ -7,7 +7,7 @@
     </div>
     <div class="ActMenu" v-if="idx==active" tag="menu">
       <div class="box">
-        <div v-for="(act, idx) in acts" :key="idx" @click="()=>{act.func(idx)}" class="btn" >{{act.txt}}</div>
+        <div v-for="(act, idx2) in acts" :key="idx2" @click="()=>{act.func(idx)}" class="btn" >{{act.txt}}</div>
       </div>
     </div>
   </div>

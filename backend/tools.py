@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, shutil
 import json, yaml
 import hashlib, binascii
 from flask.globals import request
@@ -441,6 +441,10 @@ class cert_fs:
     flObj.close()
 
   #----------------------------------
+  def delete_root_all(self):
+    shutil.rmtree(self.capath, ignore_errors=True)
+
+  #----------------------------------
   def get_req_str(self, fqdn):
     path = os.path.join(self.reqsPath, fqdn + endings["req"])
 
@@ -715,7 +719,8 @@ class cert_root:
     if type(email) != str:
       raise Exception("wrong format. Use string")
     
-    regEx = re.search('[a-z1-9.\-]+[@][a-z1-9]+[.][a-z]{2,4}$', email)
+    #regEx = re.search('[a-z1-9.\-]+[@][a-z1-9]+[.][a-z]{2,4}$', email)
+    regEx = re.search('[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email)
     if not regEx:
       raise Exception("invalid email: %s" %email)
 
@@ -927,7 +932,8 @@ class cert_websrv:
     if type(email) != str:
       raise Exception("wrong format. Use string")
     
-    regEx = re.search('[a-z1-9.\-]+[@][a-z1-9\-]+[.][a-z]{2,4}$', email)
+    #regEx = re.search('[a-z1-9.\-]+[@][a-z1-9\-]+[.][a-z]{2,4}$', email)
+    regEx = re.search('[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$', email)
     if not regEx:
       raise Exception("invalid email: %s" %email)
 

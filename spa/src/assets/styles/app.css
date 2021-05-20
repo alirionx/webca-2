@@ -71,7 +71,7 @@ body{
   font-size: 15px;
   font-weight: bold;
 }
-.stdForm input[type=text],input[type=password]{
+.stdForm input[type=text],input[type=password],input[type=email]{
   width: 95%;
   padding: 2%;
   margin: 2px 0 8px 0;
@@ -98,6 +98,18 @@ body{
   border-radius: 3px;
   background-color:#fff;
   font-size: 15px;
+}
+
+.stdForm .msgBox{
+  width: 90%;
+  margin: auto;
+  padding: 4%;
+  text-align: center;
+  background-color: #fff;
+  color: #000;
+  font-size: 18px;
+  border-radius: 3px;
+  border: 0.5px #aaa solid;
 }
 
 .stdForm .btnFrame{
@@ -128,6 +140,7 @@ body{
   bottom: 0px; 
   left: 0px;
   width: 100%;
+  z-index:10;
 }
 .msgPop .box{
   position: relative;
@@ -139,6 +152,7 @@ body{
   color:#fff;
   border-radius: 3px;
 }
+
 
 .xBtn{
   position: absolute; 
