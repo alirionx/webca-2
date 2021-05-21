@@ -358,6 +358,36 @@ def api_ca_delete(ca):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/rootcert/<ca>', methods=["GET"])
+def api_rootcert_get(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myRootCert = cert_root(ca)
+  myRootCert.load_cert_from_fs()
+
+  resObj["data"] = {
+    "crt": myRootCert.crtStr,
+    "key": myRootCert.keyStr
+  }
+
+  #---------------------
+  return jsonify(resObj), 200
+
+
+#-------------------------------------------
 @app.route('/api/certs/<ca>', methods=["GET"])
 def api_certs_get(ca):
   resObj = {

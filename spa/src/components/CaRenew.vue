@@ -3,13 +3,10 @@
     <form @submit.prevent="submit">
     <div class="stdForm">
       
-      <div class="hl">{{title}}</div>
-      
-      <div class="innerBox">
+      <div class="hl">{{title}}: "{{data.commonname}}"</div>
 
-        <div class="iptHl">Common Name</div>
-        <input type="text" required pattern="[a-z/.-]+[a-z]{2}$" v-model="data.commonname" />
-        
+      <div class="innerBox">
+      
         <div class="iptHl">Country</div>
         <select required v-model="data.country" >
           <option v-for="(val, idx) in $store.state.countryCodes" :key="idx" :value="val">{{val}}</option>
@@ -30,6 +27,11 @@
         <div class="iptHl">Email of responsible person</div>
         <input type="email" required v-model="data.email" />
 
+        <div class="iptHl">New Validity Period in years</div>
+        <select required v-model="data.days" >
+          <option v-for="(val, key) in validityPeriods" :key="key" :value="val" >{{key}}</option>
+        </select>
+
       </div>
 
       <div class="btnFrame">
@@ -49,17 +51,18 @@ const axios = require('axios');
 //import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
-  name: 'CaAdd',
+  name: 'CaRenew',
   components: {
     //HelloWorld
   },
   props:{
     cb: Function,
-    fw: Function
+    fw: Function,
+    dataIn: Object
   },
   data(){
     return{
-      title: "Add new Root Certificate Authority",
+      title: "Renew Root Certificate Authority",
       data: {
         commonname: "",
         country: "",
@@ -68,16 +71,24 @@ export default {
         organization: "",
         unit: "",
         email: "",
+        days: 1825
       },
-    
+      validityPeriods:{
+        3: 1095,
+        4: 1460,
+        5: 1825,
+        6: 2190,
+        7: 2555,
+        8: 2920,
+        9: 3285,
+        10: 3650
+      }
     }
   },
   methods:{
     submit(){
-     
-      console.log(this.data);
-      
-      axios.post('/api/ca', this.data, ).then(response => { 
+      //console.log(this.data);
+      axios.put('/api/ca/'+this.data.commonname, this.data, ).then(response => { 
         //this.loader = false;
         console.log(response.data);
         this.fw();
@@ -86,13 +97,22 @@ export default {
       .catch(error => {
         //this.loader = false;
         console.log(error);
-        this.$store.state.sysMsg = "Failed to create CA";
+        this.$store.state.sysMsg = "Failed to renew CA";
         this.$store.dispatch("trigger_reset_sys_msg", 3000);
       });
-    }
+    },
+
+    take_data_in(){
+      let tmpData =  JSON.parse(JSON.stringify(this.dataIn))
+      for(var key in tmpData){
+        this.data[key] = tmpData[key]
+      }
+    },
+
+  
   },
   created: function(){
-
+    this.take_data_in();
   },
   mounted: function(){
     

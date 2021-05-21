@@ -18,16 +18,23 @@
       </tr>
       <tr class="lastLine">
         <td :colspan="defi.length+1" >
-          <button @click="()=>{addIdx = true}">add</button>
+          <button @click="()=>{addShow = true}">add</button>
         </td>
       </tr>
     </table>
 
-    <CaAdd v-if="addIdx"
-      v-bind:defi="defi"
+    <CaAdd v-if="addShow"
       v-bind:fw="()=>{ call_authorities(); }" 
-      v-bind:cb="()=>{addIdx = null}" 
-      />
+      v-bind:cb="()=>{addShow = null}" />
+
+    <CaRenew v-if="renewIdx!=null"
+      v-bind:fw="()=>{ call_authorities(); }" 
+      v-bind:cb="()=>{renewIdx = null}" 
+      v-bind:dataIn="data[renewIdx]" />
+
+    <RootCertShow v-if="certShow"
+      v-bind:caname="certShow" 
+      v-bind:cb="()=>{certShow = null}" />
 
   </div>
 </template>
@@ -38,20 +45,30 @@ const axios = require('axios');
 
 import ActMenu from '@/components/ActMenu.vue'
 import CaAdd from '@/components/CaAdd.vue'
+import CaRenew from '@/components/CaRenew.vue'
+import RootCertShow from '@/components/RootCertShow.vue'
 
 export default {
   name: 'Authorities',
   components: {
     ActMenu,
-    CaAdd
+    CaAdd,
+    CaRenew,
+    RootCertShow
   },
   data(){
     return{
-      addIdx: null,
+      addShow: null,
+      renewIdx: null,
+      certShow: null,
       acts: [
         {
+          txt: "show cert",
+          func: (idx)=>{ this.certShow = this.data[idx].commonname; }
+        },
+        {
           txt: "renew",
-          func: (idx)=>{ console.log(idx, 'renew')}
+          func: (idx)=>{ this.renewIdx = idx; }
         },
         {
           txt: "delete",
