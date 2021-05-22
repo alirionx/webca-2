@@ -3,6 +3,7 @@ folders:
   - root
   - req
   - crt
+  - key
 
 endings:
   cert: ".crt"

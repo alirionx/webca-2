@@ -1,12 +1,16 @@
 <template>
-  <div class="authorities">
-    <h3>Root Certificate Authorities</h3>
+  <div class="requests">
+    <select class="mainSelect" v-model="authority" @change="set_hash">
+      <option value="?">select an authority</option>
+      <option v-for="(ca,idx) in authorities" :key="idx">{{ca.commonname}}</option>
+    </select>
+
     <table class="stdTable">
       <tr>
         <th v-for="(col, idx) in defi" :key="idx" :style="{textAlign: col.align}">{{col.hl}}</th>
         <th>act</th>
       </tr>
-      <tr v-for="(row, idx) in data" :key="idx">
+      <tr v-for="(row, idx) in requests" :key="idx">
         <td v-for="(col, idx2) in defi" :key="idx2" :style="{textAlign: col.align}" >{{row[col.col]}}</td>
         <td>
           <ActMenu 
@@ -16,25 +20,12 @@
             @click="()=>{this.activeMenu = idx}" />
         </td>
       </tr>
-      <tr class="lastLine">
+      <!--tr class="lastLine">
         <td :colspan="defi.length+1" >
           <button @click="()=>{addShow = true}">add</button>
         </td>
-      </tr>
+      </tr-->
     </table>
-
-    <CaAdd v-if="addShow"
-      v-bind:fw="()=>{ call_authorities(); }" 
-      v-bind:cb="()=>{addShow = null}" />
-
-    <CaRenew v-if="renewIdx!=null"
-      v-bind:fw="()=>{ call_authorities(); }" 
-      v-bind:cb="()=>{renewIdx = null}" 
-      v-bind:dataIn="data[renewIdx]" />
-
-    <RootCertShow v-if="certShow"
-      v-bind:caname="certShow" 
-      v-bind:cb="()=>{certShow = null}" />
 
   </div>
 </template>
@@ -42,48 +33,18 @@
 <script>
 import store from '../store'
 const axios = require('axios');
-
 import ActMenu from '@/components/ActMenu.vue'
-import CaAdd from '@/components/CaAdd.vue'
-import CaRenew from '@/components/CaRenew.vue'
-import RootCertShow from '@/components/RootCertShow.vue'
 
 export default {
-  name: 'Authorities',
+  name: 'Requests',
   components: {
-    ActMenu,
-    CaAdd,
-    CaRenew,
-    RootCertShow
+    ActMenu
   },
   data(){
     return{
-      addShow: null,
-      renewIdx: null,
-      certShow: null,
-      acts: [
-        {
-          txt: "show root cert",
-          func: (idx)=>{ this.certShow = this.data[idx].commonname; }
-        },
-        {
-          txt: "requests",
-          func: (idx)=>{ location.hash = '/requests/'+this.data[idx].commonname; }
-        },
-        {
-          txt: "certificates",
-          func: (idx)=>{ location.hash = '/certificates/'+this.data[idx].commonname; }
-        },
-        {
-          txt: "renew",
-          func: (idx)=>{ this.renewIdx = idx; }
-        },
-        {
-          txt: "delete",
-          func: (idx)=>{ this.call_delete(idx) }
-        }
-      ],
-      activeMenu: null,
+      authorities: [],
+      authority: "?",
+
       defi: [
         {
           col: "commonname",
@@ -119,14 +80,26 @@ export default {
           col: "email",
           hl: "Responsible Email",
           align: "left"
-        },
-        {
-          col: "validity",
-          hl: "Validity",
-          align: "center"
         }
       ],
-      data: []
+      requests:[],
+
+      acts: [
+        {
+          txt: "show reqest",
+          func: (idx)=>{ console.log("SHOW: "+idx) }
+        },
+        {
+          txt: "sign",
+          func: (idx)=>{ console.log("SIGN: "+idx) }
+        },
+        {
+          txt: "delete",
+          func: (idx)=>{ console.log("DELETE: "+idx) }
+        }
+      ],
+      activeMenu: null,
+      certReq: null,
     }
   },
   methods:{
@@ -134,7 +107,7 @@ export default {
       axios.get('/api/cas')
       .then((response)=> {
         console.log(response.data);
-        this.data = response.data.data;
+        this.authorities = response.data.data;
 
       })
       .catch((err)=> {
@@ -144,34 +117,38 @@ export default {
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
     },
-    reset_active_menu(){
-      this.activeMenu = null;
-    },
 
-    call_delete(idx){
-      this.$store.state.sysConfirmFw = ()=>{console.log("del")}
-      this.$store.state.sysConfirmMsg = "Do you really want to delete the root certificate authority: " + this.data[idx].commonname;
-      this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
-    },
-    do_delete(idx){
-      var caCn = this.data[idx].commonname;
-      axios.delete('/api/ca/'+caCn)
+    call_requests(){
+      axios.get('/api/reqs/'+this.authority)
       .then((response)=> {
         console.log(response.data);
-        this.call_authorities();
+        this.requests = response.data.data;
       })
       .catch((err)=> {
         // handle error
         console.log(err.response);
-        this.$store.state.sysMsg = "Failed to delete ca: "+caCn;
+        this.$store.state.sysMsg = "Failed to call data from API: /api/reqs/"+this.authority;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
-    }
+    },
 
+    set_hash(){
+      location.hash = "/requests/"+this.authority;
+      if(this.authority=="?"){
+        this.requests = [];
+      }
+      else{
+        this.call_requests();
+      }
+    },
+
+    reset_active_menu(){
+      this.activeMenu = null;
+    },
   },
   created: function(){
-    //console.log("Authorities created");
     this.call_authorities();
+
     var fwFunc = ()=> {this.reset_active_menu();}
     document.addEventListener("click", function(ev){
       let chk = ev.target.getAttribute('tag');
@@ -179,9 +156,15 @@ export default {
         fwFunc();
       }
     })
+
   },
   mounted: function(){
-    //console.log("Authorities mounted");
+    if(this.$route.params.caname){
+      this.authority = this.$route.params.caname;
+    }
+    if(this.authority!="?"){
+      this.call_requests();
+    }
   }
 
 }

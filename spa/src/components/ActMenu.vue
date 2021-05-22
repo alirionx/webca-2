@@ -79,7 +79,7 @@ export default {
 }
 .ActMenu .btn{
   padding:3px;
-  min-width: 80px;
+  min-width: 110px;
   background-color: #444;
   color: #fff;
   font-size: 14px;

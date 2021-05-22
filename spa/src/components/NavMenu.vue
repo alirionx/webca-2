@@ -4,7 +4,7 @@
       <div class="btn" 
         v-if="chk_show(idx)"
         @click="opt.func"
-        v-bind:class="{ isActive: opt.lnk==$route.path, fst:idx==0 }"
+        v-bind:class="{ isActive: opt.lnk==$route.path || (opt.lnk!='/' && $route.path.includes(opt.lnk)), fst:idx==0 }" 
         >{{opt.txt}}
       </div>
     </div>
@@ -37,10 +37,22 @@ export default {
           func: ()=>{ this.goto("/authorities") },
         },
         {
+          txt: "Requests",
+          lnk: "/requests",
+          roles: ["admin", "caadmin", "requester" ],
+          func: ()=>{ this.goto("/requests/?") },
+        },
+        {
           txt: "Certificates",
           lnk: "/certificates",
           roles: ["admin", "caadmin", "requester" ],
-          func: ()=>{ this.goto("/certificates") },
+          func: ()=>{ this.goto("/certificates/?") },
+        },
+        {
+          txt: "Users",
+          lnk: "/users",
+          roles: ["admin"],
+          func: ()=>{ this.goto("/users") },
         },
         {
           txt: "Settings",

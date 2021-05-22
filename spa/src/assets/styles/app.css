@@ -41,6 +41,17 @@ body{
   background-color: rgba(255,255,255,0.85);
 }
 
+.mainSelect{
+  display: table;
+  min-width: 280px;
+  margin: 20px auto 28px auto;
+  padding:10px;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
 
 .stdForm{
   display: inline-block;
@@ -125,7 +136,7 @@ body{
   display: block;
   text-align: left;
   width: 94%;
-  min-height: 180px;
+  min-height: 160px;
   resize: vertical;
   padding:10px;
   margin:2px 4px 10px 4px;

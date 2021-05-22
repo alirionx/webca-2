@@ -27,7 +27,27 @@ const routes = [
       return import('../views/Authorities.vue')
     },
     meta:{
-      roles: ["admin"]
+      roles: ["admin", "caadmin"]
+    }
+  },
+  {
+    path: '/requests',
+    name: 'Requests',
+    component: function () {
+      return import('../views/Requests.vue')
+    },
+    meta:{
+      roles: ["admin", "caadmin", "requester"]
+    }
+  },
+  {
+    path: '/requests/:caname',
+    name: 'RequestsCa',
+    component: function () {
+      return import('../views/Requests.vue')
+    },
+    meta:{
+      roles: ["admin", "caadmin", "requester"]
     }
   },
   {
@@ -35,6 +55,26 @@ const routes = [
     name: 'Certificates',
     component: function () {
       return import('../views/Certificates.vue')
+    },
+    meta:{
+      roles: ["admin", "caadmin", "requester"]
+    }
+  },
+  {
+    path: '/certificates/:caname',
+    name: 'CertificatesCa',
+    component: function () {
+      return import('../views/Certificates.vue')
+    },
+    meta:{
+      roles: ["admin", "caadmin", "requester"]
+    }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: function () {
+      return import('../views/Users.vue')
     },
     meta:{
       roles: ["admin"]
