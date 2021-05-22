@@ -20,11 +20,11 @@
             @click="()=>{this.activeMenu = idx}" />
         </td>
       </tr>
-      <!--tr class="lastLine">
+      <tr class="lastLine">
         <td :colspan="defi.length+1" >
           <button @click="()=>{addShow = true}">add</button>
         </td>
-      </tr-->
+      </tr>
     </table>
 
   </div>
@@ -106,6 +106,7 @@ export default {
 
       activeMenu: null,
       certShow: null,
+      addShow: null,
     }
   },
   methods:{

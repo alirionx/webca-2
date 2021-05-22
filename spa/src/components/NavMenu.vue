@@ -64,7 +64,7 @@ export default {
           txt: "Logout",
           lnk: "logout",
           roles: ["admin", "caadmin", "requester"],
-          func: this.logout,
+          func: this.call_logout,
         },
 
       ]
@@ -88,7 +88,12 @@ export default {
         return false;
       }
     },
-    logout(){
+
+    call_logout(){
+      this.$store.state.sysConfirmMsg = "Do you really want to logout?";
+      this.$store.state.sysConfirmFw = ()=>{this.do_logout()};
+    },
+    do_logout(){
       axios.post('/api/logout', {}, ).then(response => { 
         console.log(response.data);
         this.$store.commit("reset_username_role");

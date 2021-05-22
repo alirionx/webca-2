@@ -20,12 +20,23 @@
             @click="()=>{this.activeMenu = idx}" />
         </td>
       </tr>
-      <!--tr class="lastLine">
+      <tr class="lastLine">
         <td :colspan="defi.length+1" >
           <button @click="()=>{addShow = true}">add</button>
+          <button @click="()=>{uploadShow = true}">upload</button>
         </td>
-      </tr-->
+      </tr>
     </table>
+
+    <ReqShow v-if="reqShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:commonname="reqShow" 
+      v-bind:cb="()=>{reqShow = null;}" />
+
+    <ReqUpload v-if="uploadShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:fw="()=>{call_requests();}"
+      v-bind:cb="()=>{uploadShow = null;}" />
 
   </div>
 </template>
@@ -34,11 +45,15 @@
 import store from '../store'
 const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
+import ReqShow from '@/components/ReqShow.vue'
+import ReqUpload from '@/components/ReqUpload.vue'
 
 export default {
   name: 'Requests',
   components: {
-    ActMenu
+    ActMenu,
+    ReqShow,
+    ReqUpload
   },
   data(){
     return{
@@ -87,7 +102,7 @@ export default {
       acts: [
         {
           txt: "show reqest",
-          func: (idx)=>{ console.log("SHOW: "+idx) }
+          func: (idx)=>{ this.reqShow = this.requests[idx].commonname; }
         },
         {
           txt: "sign",
@@ -95,11 +110,14 @@ export default {
         },
         {
           txt: "delete",
-          func: (idx)=>{ console.log("DELETE: "+idx) }
+          func: (idx)=>{ this.call_delete(idx); }
         }
       ],
       activeMenu: null,
       certReq: null,
+      addShow:null,
+      uploadShow:null,
+      reqShow:null,
     }
   },
   methods:{
@@ -145,6 +163,26 @@ export default {
     reset_active_menu(){
       this.activeMenu = null;
     },
+
+    call_delete(idx){
+      this.$store.state.sysConfirmMsg = "Do you really want to delete this request: " + this.requests[idx].commonname;
+      this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
+    },
+    do_delete(idx){
+      var reqCn = this.requests[idx].commonname;
+      axios.delete('/api/req/'+this.authority+'/'+reqCn)
+      .then((response)=> {
+        console.log(response.data);
+        this.call_requests();
+      })
+      .catch((err)=> {
+        // handle error
+        console.log(err.response);
+        this.$store.state.sysMsg = "Failed to delete ca: "+reqCn;
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
+    }
+
   },
   created: function(){
     this.call_authorities();

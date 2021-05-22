@@ -149,7 +149,6 @@ export default {
     },
 
     call_delete(idx){
-      this.$store.state.sysConfirmFw = ()=>{console.log("del")}
       this.$store.state.sysConfirmMsg = "Do you really want to delete the root certificate authority: " + this.data[idx].commonname;
       this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
     },

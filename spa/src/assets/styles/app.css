@@ -185,6 +185,20 @@ body{
   background: #555; 
 }
 
+.stdForm .icoBar{
+  text-align: right;
+  padding: 0 24px 6px 0;
+}
+.stdForm .icoBar img{
+  height: 24px;
+  margin: 0 6px 0 6px;
+  cursor:pointer;
+  border-bottom: 2px solid transparent;
+}
+.stdForm .icoBar img:hover{
+  border-bottom: 2px solid #000;
+}
+
 
 
 .msgPop{
@@ -249,21 +263,23 @@ body{
   background: none;
   border: none;
   text-align: right;
-  padding-right: 4px; 
+  *padding-right: 4px; 
 }
 .stdTable .lastLine button{
   padding:3px;
-  min-width: 50px;
+  min-width: 64px;
   background-color: #444;
   color: #fff;
   font-size: 14px;
   cursor: pointer;
   border:1px solid #000;
-  margin-top: 6px;
+  margin: 6px 4px 0 4px;
   border-radius: 3px;
 }
 .stdTable .lastLine button:hover{
   background-color: #000;
 }
+
+
 
 

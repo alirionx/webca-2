@@ -6,7 +6,7 @@ import json
 import re
 
 #-Custom Modules and mappers-------
-from tools import cert_fs, meta_collector, cert_root, cert_websrv, token, user
+from tools import cert_fs, meta_collector, cert_root, cert_websrv, token, user, helpers
 
 
 #-API Globals and contructors-------------------------------------
@@ -627,9 +627,52 @@ def api_req_get(ca, fqdn):
     resObj["status"] = 500
     return jsonify(resObj), 500
 
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/reqpem/<ca>/<fqdn>', methods=["GET"])
+def api_reqpem_get(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myCertsFs = cert_fs(ca)
+  crtAry = myCertsFs.list_requests()
+  if fqdn not in crtAry:
+    resObj["msg"] = "Cert Request not exist: '%s'" %fqdn
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myReq = cert_websrv(ca, fqdn)
+  try:
+    myReq.load_req_from_fs()
+    resObj["data"] = {
+      "req": myReq.reqStr,
+      "key": myReq.keyStr
+    }
+  except:
+    resObj["msg"] = "Failes to load Certificate: '%s'" %fqdn
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
 
   #---------------------
   return jsonify(resObj), 200
+
 
 #-------------------------------------------
 @app.route('/api/req/<ca>', methods=["POST"]) # Create Cert Request
@@ -689,6 +732,63 @@ def api_req_post(ca):
     resObj["status"] = 500
     return jsonify(resObj), 500
 
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+
+#-------------------------------------------
+@app.route('/api/req/upload/<ca>', methods=["POST"]) # Upload Cert Request
+def api_req_upload_post(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  postData = request.json
+  if "req" not in postData:
+    resObj["msg"] = "reqest string required for new Request"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  else:
+    reqStr = postData["req"]
+
+  #---------------------
+  myMetaColl = meta_collector()
+  caAry = myMetaColl.list_cas()
+  if ca not in caAry:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  myHelpers = helpers()
+  try:
+    fqdn = myHelpers.get_fqdn_from_str(reqStr)
+    resObj["fqdn"] = fqdn
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Invalid cert request string. PEM???"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  #---------------------
+
+  myCertFs = cert_fs(ca)
+  reqAry = myCertFs.list_requests()
+  if fqdn in reqAry:
+    resObj["msg"] = "A cert request for '%s' already exist" %fqdn
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  myCert = cert_websrv(ca, fqdn)
+  myCert.reqStr = reqStr
+  myCert.load_req_from_string()
+  myCert.write_cert_objects_to_fs()
+  
   #---------------------
   return jsonify(resObj), 200
 
@@ -756,7 +856,7 @@ def api_token_cert_renew():
   myToken = token()
   res = myToken.validate_token(tokenStr, fqdn)
   if not res:
-    return "Invalid token or FQDN", 401
+    return "Invalid token or FQDN", 400
   
   try:
     caname = res["caname"]

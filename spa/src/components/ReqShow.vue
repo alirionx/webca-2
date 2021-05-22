@@ -6,11 +6,11 @@
 
       <div class="hl">{{title}}</div>
       <!--div class="innerBox"-->
-        <div class="iptHl" style="font-size:14px">Certificate (PEM)</div>
-        <textarea class="certBox" disabled v-model="data.crt"></textarea>
+        <div class="iptHl" style="font-size:14px">Request (PEM)</div>
+        <textarea class="certBox" disabled v-model="data.req"></textarea>
         <div class="icoBar">
-          <img src="@/assets/icon_copy.svg" @click="copy_text(data.crt)" />
-          <img src="@/assets/icon_download.svg" @click="dl_text_as_file(caname+'_root-crt.pem', data.crt)" />
+          <img src="@/assets/icon_copy.svg" @click="copy_text(data.req)" />
+          <img src="@/assets/icon_download.svg" @click="dl_text_as_file(caname+'_root-crt.pem', data.req)" />
         </div>
 
         <div class="iptHl" style="font-size:14px">Key (PEM)</div>
@@ -31,27 +31,26 @@
 </template>
 
 <script>
-import store from '../store'
 const axios = require('axios');
 
-
 export default {
-  name: 'RootCertShow',
+  name: 'ReqShow',
   components: {
   },
   props:{
     caname:String,
+    commonname:String,
     cb:Function
   },
   data(){
     return{
-      title: this.caname+": certificates",
+      title: "Request: " +this.commonname+ "("+this.caname+")",
       data: {}
     }
   },
   methods:{
-    call_root_cert(){
-      axios.get('/api/rootcert/'+this.caname)
+    call_cert_request(){
+      axios.get('/api/reqpem/'+this.caname+'/'+this.commonname)
       .then((response)=> {
         console.log(response.data);
         this.data = response.data.data;
@@ -90,7 +89,7 @@ export default {
 
   },
   created: function(){
-    this.call_root_cert();
+    this.call_cert_request();
   },
   mounted: function(){
   }

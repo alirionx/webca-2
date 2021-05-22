@@ -84,6 +84,13 @@ class helpers:
       flObj.close()
 
   #----------------------------------
+  def get_fqdn_from_str(self, crtStr):
+    #print(crtStr)
+    reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, crtStr)
+    fqdn = reqObj.get_subject().CN
+    return fqdn
+
+  #----------------------------------
 
 #----------------------------------------------------------
 class user:
@@ -1080,10 +1087,23 @@ class cert_websrv:
   #----------------------------------
   def load_req_from_fs(self):
     myCertFs = cert_fs(self.caname)
-    self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+    
     self.reqStr = myCertFs.get_req_str(fqdn=self.commonname)
+    self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
 
-    self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    try:
+      self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+      self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    except Exception as e:
+      print(e)
+
+    for classKey, crtKey in subjects.items():
+      if hasattr(self.reqObj.get_subject(), crtKey):
+        curVal = getattr(self.reqObj.get_subject(), crtKey)
+        setattr(self, classKey, curVal)
+  
+  #----------------------------------
+  def load_req_from_string(self):
     self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
 
     for classKey, crtKey in subjects.items():
