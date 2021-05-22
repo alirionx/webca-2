@@ -5,7 +5,7 @@
       <option v-for="(ca,idx) in authorities" :key="idx">{{ca.commonname}}</option>
     </select>
 
-    <table class="stdTable">
+    <table class="stdTable" v-if="authority!='?'">
       <tr>
         <th v-for="(col, idx) in defi" :key="idx" :style="{textAlign: col.align}">{{col.hl}}</th>
         <th>act</th>
@@ -106,7 +106,7 @@ export default {
         },
         {
           txt: "sign",
-          func: (idx)=>{ console.log("SIGN: "+idx) }
+          func: (idx)=>{ this.call_sign(idx); }
         },
         {
           txt: "delete",
@@ -164,6 +164,27 @@ export default {
       this.activeMenu = null;
     },
 
+    call_sign(idx){
+      this.$store.state.sysConfirmMsg = "Do you really want to sign this request: " + this.requests[idx].commonname;
+      this.$store.state.sysConfirmFw = ()=>{this.do_sign(idx)};
+    },
+    do_sign(idx){
+      var reqCn = this.requests[idx].commonname;
+      axios.post('/api/cert/'+this.authority+'/'+reqCn, {}, )
+      .then(response => { 
+        //this.loader = false;
+        console.log(response.data);
+        this.call_requests();
+      })
+      .catch(error => {
+        //this.loader = false;
+        console.log(error);
+        this.$store.state.sysMsg = "Failed to sign request: "+reqCn;
+        this.$store.dispatch("trigger_reset_sys_msg", 3000);
+      });
+    },
+
+
     call_delete(idx){
       this.$store.state.sysConfirmMsg = "Do you really want to delete this request: " + this.requests[idx].commonname;
       this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
@@ -178,7 +199,7 @@ export default {
       .catch((err)=> {
         // handle error
         console.log(err.response);
-        this.$store.state.sysMsg = "Failed to delete ca: "+reqCn;
+        this.$store.state.sysMsg = "Failed to delete request: "+reqCn;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
     }

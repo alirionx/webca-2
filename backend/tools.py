@@ -1046,8 +1046,10 @@ class cert_websrv:
   
   #----------------------------------
   def sign_cert(self):
-    if not self.pKey or not self.reqObj:
-      raise Exception("Please create/load key and req first")
+    # if not self.pKey or not self.reqObj:
+    #   raise Exception("Please create/load key and req first")
+    if not self.reqObj:
+      raise Exception("Please create/load request first")
     
     self.crtObj = crypto.X509()
     self.crtObj.set_version(2) # Drecksack!!!!!!!!!!!!
@@ -1060,7 +1062,8 @@ class cert_websrv:
     self.crtObj.set_issuer(self.caCrtObj.get_subject())
     self.crtObj.set_subject(self.reqObj.get_subject())
     self.crtObj.add_extensions(self.reqObj.get_extensions())
-    self.crtObj.set_pubkey(self.pKey)
+    #self.crtObj.set_pubkey(self.pKey)
+    self.crtObj.set_pubkey(self.caKeyObj)
 
     self.crtObj.sign(self.caKeyObj, 'sha512')
 
@@ -1114,11 +1117,15 @@ class cert_websrv:
   #----------------------------------
   def load_cert_from_fs(self):
     myCertFs = cert_fs(self.caname)
-    self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+    
     self.crtStr = myCertFs.get_cert_str(fqdn=self.commonname)
-
-    self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     self.crtObj = crypto.load_certificate(crypto.FILETYPE_PEM, self.crtStr)
+
+    try:
+      self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
+      self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
+    except Exception as e:
+      print(e)
     
     for classKey, crtKey in subjects.items():
       if hasattr(self.crtObj.get_subject(), crtKey):
