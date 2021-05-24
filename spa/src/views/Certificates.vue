@@ -5,7 +5,7 @@
       <option v-for="(ca,idx) in authorities" :key="idx">{{ca.commonname}}</option>
     </select>
 
-    <table class="stdTable">
+    <table class="stdTable" v-if="authority!='?'">
       <tr>
         <th v-for="(col, idx) in defi" :key="idx" :style="{textAlign: col.align}">{{col.hl}}</th>
         <th>act</th>
@@ -27,6 +27,11 @@
       </tr>
     </table>
 
+    <SansShow v-if="sansShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:data="certificates[sansShow]" 
+      v-bind:cb="()=>{sansShow = null;}" />
+
   </div>
 </template>
 
@@ -34,11 +39,13 @@
 import store from '../store'
 const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
+import SansShow from '@/components/SansShow.vue'
 
 export default {
   name: 'Certificates',
   components: {
-    ActMenu
+    ActMenu,
+    SansShow
   },
   data(){
     return{
@@ -95,18 +102,23 @@ export default {
           func: (idx)=>{ console.log("SHOW: "+idx) }
         },
         {
+          txt: "show sans",
+          func: (idx)=>{ this.sansShow = idx; }
+        },
+        {
           txt: "renew",
           func: (idx)=>{ console.log("RENEW: "+idx) }
         },
         {
           txt: "delete",
-          func: (idx)=>{ console.log("DELETE: "+idx) }
+          func: (idx)=>{ this.call_delete(idx); }
         }
       ],
 
       activeMenu: null,
       certShow: null,
       addShow: null,
+      sansShow: null,
     }
   },
   methods:{
@@ -152,7 +164,27 @@ export default {
     reset_active_menu(){
       this.activeMenu = null;
     },
+
+    call_delete(idx){
+      this.$store.state.sysConfirmMsg = "Do you really want to delete this certificate: " + this.certificates[idx].commonname;
+      this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
+    },
+    do_delete(idx){
+      var crtCn = this.certificates[idx].commonname;
+      axios.delete('/api/cert/'+this.authority+'/'+crtCn)
+      .then((response)=> {
+        console.log(response.data);
+        this.call_certificates();
+      })
+      .catch((err)=> {
+        // handle error
+        console.log(err.response);
+        this.$store.state.sysMsg = "Failed to delete certificate: "+crtCn;
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
+    }
   },
+
   created: function(){
     this.call_authorities();
 

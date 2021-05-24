@@ -203,7 +203,6 @@ export default {
       });
     },
 
-
     call_delete(idx){
       this.$store.state.sysConfirmMsg = "Do you really want to delete this request: " + this.requests[idx].commonname;
       this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};

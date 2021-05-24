@@ -42,7 +42,7 @@ export default {
   },
   methods:{
     submit(){
-      console.log(this.username, this.password);
+      //console.log(this.username, this.password);
       let data = {
         username: this.username,
         password: this.password

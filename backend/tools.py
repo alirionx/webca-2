@@ -115,6 +115,42 @@ class helpers:
       return False
 
   #----------------------------------
+  def get_req_sans_list(self, reqObj):
+    extAry = reqObj.get_extensions()# UIUIUI WZF
+    sansList = []
+    for ext in extAry:
+      extStr = str(ext)
+      extStrAry = extStr.split(", ")
+      for san in sanTypes:
+        for extEntry in extStrAry:
+          if extEntry.startswith(san):
+            sanObj = {
+              "key": san,
+              "val": extEntry.split(":")[1]
+            }
+            sansList.append(sanObj)
+    
+    return sansList
+
+  #----------------------------------
+  def get_crt_sans_list(self, crtObj):
+    sansList = []
+    sanLen = crtObj.get_extension_count() # UIUIUI noch mehr WZF
+    for i in range(sanLen):
+      extStr = str(crtObj.get_extension(i))
+      extStrAry = extStr.split(", ")
+      for san in sanTypes:
+        for extEntry in extStrAry:
+          if extEntry.startswith(san):
+            sanObj = {
+              "key": san,
+              "val": extEntry.split(":")[1]
+            }
+            sansList.append(sanObj)
+    
+    return sansList
+
+  #----------------------------------
 
 #----------------------------------------------------------
 class user:
@@ -1157,20 +1193,12 @@ class cert_websrv:
         curVal = getattr(self.reqObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
 
-    self.sans = [] #Warum... Ist mir nich klar...
-    extAry = self.reqObj.get_extensions()# UIUIUI WZF
-    for ext in extAry:
-      extStr = str(ext)
-      extStrAry = extStr.split(", ")
-      for san in sanTypes:
-        for extEntry in extStrAry:
-          if extEntry.startswith(san):
-            sanObj = {
-              "key": san,
-              "val": extEntry.split(":")[1]
-            }
-            self.sans.append(sanObj)
-    
+    myHelpers = helpers()
+    try:
+      self.sans = myHelpers.get_req_sans_list(self.reqObj)
+    except Exception as e:
+      print(e)
+
   #----------------------------------
   def load_req_from_string(self):
     self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
@@ -1179,6 +1207,12 @@ class cert_websrv:
       if hasattr(self.reqObj.get_subject(), crtKey):
         curVal = getattr(self.reqObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
+    
+    myHelpers = helpers()
+    try:
+      self.sans = myHelpers.get_req_sans_list(self.reqObj)
+    except Exception as e:
+      print(e)
     
   #----------------------------------
   def load_cert_from_fs(self):
@@ -1199,6 +1233,12 @@ class cert_websrv:
         setattr(self, classKey, curVal)
 
     self.validity = self.crtObj.get_notAfter()
+    
+    myHelpers = helpers()
+    try:
+      self.sans = myHelpers.get_crt_sans_list(self.crtObj)
+    except Exception as e:
+      print(e)
   
   #----------------------------------
   def renew_cert(self, days=None):
