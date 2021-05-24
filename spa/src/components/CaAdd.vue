@@ -33,7 +33,7 @@
       </div>
 
       <div class="btnFrame">
-        <button @click="print_data">Submit</button>
+        <button >Submit</button>
         <button type="button" @click="cb">Cancel</button>
       </div>
 

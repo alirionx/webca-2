@@ -280,6 +280,69 @@ body{
   background-color: #000;
 }
 
+.keyValTbl{
+  width:98%;
+  margin: 2px 0 2px 2px ;
+}
+.keyValTbl th{
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  text-align: left;
+  text-transform: uppercase;
+  padding:6px;
+  width: 70px;
+  border:none;
+}
+.keyValTbl td{
+  background-color: #ddd;
+  color: #000;
+  font-weight: normal;
+  font-size: 14px;
+  text-align: left;
+  padding:6px;
+  border: none;
+}
+.keyValTbl td:last-child{
+  width: 70px;
+  text-align: center;
+}
 
+.keyValTbl td input{
+  width:98%;
+  margin:-4px auto -4px auto;
+  padding:4px;
+  box-shadow: none;
+  border: 1px solid #888;
+  border-radius: 1px;
+}
+.keyValTbl th select{
+  margin:-4px;
+  padding:4px;
+  width: 76px;
+  font-size: 13px;
+  box-shadow: none;
+  border: 1px solid #444;
+  border-radius: 1px;
+  background: #666;
+  color:#fff;
+}
+
+.miniBtn{
+  display: inline-block;
+  padding:2px;
+  min-width: 60px;
+  background-color: #444;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  border:1px solid #000;
+  margin: -2px;
+  border-radius: 3px;
+}
+.miniBtn:hover{
+  background-color: #000;
+}
 
 

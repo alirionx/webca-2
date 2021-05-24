@@ -33,6 +33,16 @@
       v-bind:commonname="reqShow" 
       v-bind:cb="()=>{reqShow = null;}" />
 
+    <SansShow v-if="sansShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:data="requests[sansShow]" 
+      v-bind:cb="()=>{sansShow = null;}" />
+
+    <RequestAdd v-if="addShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:fw="()=>{call_requests();}"
+      v-bind:cb="()=>{addShow = null;}" />
+
     <ReqUpload v-if="uploadShow!=null" 
       v-bind:caname="authority" 
       v-bind:fw="()=>{call_requests();}"
@@ -42,18 +52,22 @@
 </template>
 
 <script>
-import store from '../store'
+//import store from '../store'
 const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
 import ReqShow from '@/components/ReqShow.vue'
+import RequestAdd from '@/components/RequestAdd.vue'
 import ReqUpload from '@/components/ReqUpload.vue'
+import SansShow from '@/components/SansShow.vue'
 
 export default {
   name: 'Requests',
   components: {
     ActMenu,
+    RequestAdd,
     ReqShow,
-    ReqUpload
+    ReqUpload,
+    SansShow
   },
   data(){
     return{
@@ -105,6 +119,10 @@ export default {
           func: (idx)=>{ this.reqShow = this.requests[idx].commonname; }
         },
         {
+          txt: "show sans",
+          func: (idx)=>{ this.sansShow = idx; }
+        },
+        {
           txt: "sign",
           func: (idx)=>{ this.call_sign(idx); }
         },
@@ -115,9 +133,10 @@ export default {
       ],
       activeMenu: null,
       certReq: null,
-      addShow:null,
-      uploadShow:null,
-      reqShow:null,
+      addShow: null,
+      uploadShow: null,
+      reqShow: null,
+      sansShow: null,
     }
   },
   methods:{

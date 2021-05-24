@@ -20,6 +20,7 @@ flObj.close()
 
 folders = objIn["folders"]
 subjects = objIn["subjects"]
+sanTypes = objIn["sanTypes"]
 mandaSubjects = objIn["mandaSubjects"]
 stdRootValidity = objIn["stdRootValidity"]
 stdCertValidity = objIn["stdCertValidity"]
@@ -89,6 +90,29 @@ class helpers:
     reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, crtStr)
     fqdn = reqObj.get_subject().CN
     return fqdn
+
+  #----------------------------------
+  def chk_san_validity(self, key, val):
+    key = key.upper()
+    tmpcrtObj = crypto.X509Req()
+    tmpcrtObj.set_version(3)
+
+    #------------------
+    sanList = [
+      key+": {0}".format(str(val))
+    ]
+    sanListStrEnc = ", ".join(sanList).encode()
+    
+    #------------
+    sanObj = [ 
+      crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=sanListStrEnc)
+    ]
+    try:
+      tmpcrtObj.add_extensions(sanObj)
+      return True
+    except Exception as e:
+      print(e)
+      return False
 
   #----------------------------------
 
@@ -858,6 +882,8 @@ class cert_websrv:
     self.ipv4 = None
     self.ipv6 = None
 
+    self.sans = []
+
     self.country = None
     self.state = None
     self.city = None
@@ -958,6 +984,27 @@ class cert_websrv:
     self.ipv4 = ipv4Str
 
   #----------------------------------
+  def add_san(self, typ, sanStr):
+    typ = typ.upper()
+    
+    #---------------
+    if typ not in sanTypes:
+      raise Exception("Sans type must be one of the following: %s" %sanTypes)
+    
+    #---------------
+    myHelpers = helpers()
+    res = myHelpers.chk_san_validity(typ, sanStr)
+    if not res:
+      raise Exception("Invalid value (string) for key: %s" %typ)
+
+    #---------------
+    sanObj = {
+      "key": typ,
+      "val": sanStr
+    }
+    self.sans.append(sanObj)
+
+  #----------------------------------
   def load_ca(self, caname):
     try:
       myCa = cert_root(caname)
@@ -1023,15 +1070,20 @@ class cert_websrv:
 
     #------------------
     sanList = [
-      "DNS: {0}".format(self.commonname),
+      "DNS: {0}".format(self.commonname)
     ]
+    #------------
     if self.ipv4: 
       sanList.append( "IP: {0}".format(self.ipv4) )
     if self.ipv6: 
       sanList.append( "IP: {0}".format(self.ipv6) )
+    #------------
+    for sanObj in self.sans:
+      sanList.append( sanObj["key"]+": {0}".format(sanObj["val"]) )
 
+    #------------
     sanListStrEnc = ", ".join(sanList).encode()
-
+    
     sanObj = [ 
       crypto.X509Extension(type_name=b"basicConstraints", critical=False, value=b"CA:FALSE" ),
       crypto.X509Extension(type_name=b"keyUsage", critical=False, value=b"digitalSignature" ),
@@ -1104,7 +1156,21 @@ class cert_websrv:
       if hasattr(self.reqObj.get_subject(), crtKey):
         curVal = getattr(self.reqObj.get_subject(), crtKey)
         setattr(self, classKey, curVal)
-  
+
+    self.sans = [] #Warum... Ist mir nich klar...
+    extAry = self.reqObj.get_extensions()# UIUIUI WZF
+    for ext in extAry:
+      extStr = str(ext)
+      extStrAry = extStr.split(", ")
+      for san in sanTypes:
+        for extEntry in extStrAry:
+          if extEntry.startswith(san):
+            sanObj = {
+              "key": san,
+              "val": extEntry.split(":")[1]
+            }
+            self.sans.append(sanObj)
+    
   #----------------------------------
   def load_req_from_string(self):
     self.reqObj = crypto.load_certificate_request(crypto.FILETYPE_PEM, self.reqStr) 
@@ -1169,6 +1235,10 @@ class cert_websrv:
       if curVal:
         resObj[classKey] = curVal
     
+    #--------------
+    resObj["sans"] = self.sans
+
+    #--------------
     if self.validity:
       myHelpers = helpers()
       resObj["validity"] = myHelpers.asn1_to_datestr(self.validity)

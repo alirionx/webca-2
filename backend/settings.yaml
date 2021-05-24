@@ -19,6 +19,10 @@ subjects:
   unit: "OU"
   email: "emailAddress"
 
+sanTypes: 
+  - IP
+  - DNS
+
 mandaSubjects: 
   - commonname
   - country

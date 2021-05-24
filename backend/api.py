@@ -39,8 +39,7 @@ certFuncMap = {
   "city": "set_city",
   "organization": "set_organization",
   "unit": "set_unit",
-  "email": "set_email",
-  "ipv4": "set_ipv4"
+  "email": "set_email"
 }
 
 
@@ -681,7 +680,7 @@ def api_req_post(ca):
     "path": request.path,
     "method": request.method,
     "status": 200,
-    "msg": ""
+    "msg": []
   }
 
   #---------------------
@@ -718,8 +717,20 @@ def api_req_post(ca):
         curFunc(postData[key])
       except Exception as e:
         print(e)
+        resObj["msg"].append("Failed to add %s" %key)
         continue
   
+  #-----------------------
+  if "sans" in postData:
+    sansAry = postData["sans"]
+    for sanObj in sansAry:
+      try:
+        myCert.add_san(sanObj["key"], sanObj["val"])
+      except Exception as e:
+        print(e)
+        resObj["msg"].append("failed to add san: %s" %str(sanObj))
+        continue
+
   #-----------------------
   try:
     myCert.gen_priv_key()

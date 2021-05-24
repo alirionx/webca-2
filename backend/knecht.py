@@ -2,7 +2,7 @@ import json
 
 import sys
 sys.path.append(".")
-from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
+from tools import helpers, user, token, cert_fs, meta_collector, cert_root, cert_websrv
 
 
 # myRootCert = cert_root()
@@ -30,14 +30,20 @@ from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
 # myRootCert.write_cert_to_fs()
 
 
-# myCert = cert_websrv(caname='app-scape.lab', fqdn='smtp.app-scape.lab')
-# myCert.set_city("STG")
-# myCert.set_email("dquilitzsch@app-scape.lab")
-# myCert.set_unit("LAB")
+# myCert = cert_websrv(caname='app-scape.lab', fqdn='san1.app-scape.lab')
 # myCert.set_country_code ("DE")
 # myCert.set_state("BW")
-# myCert.set_organization("Penner")
-
+# myCert.set_city("STG")
+# myCert.set_organization("AppScape")
+# myCert.set_unit("LAB")
+# myCert.set_email("dquilitzsch@app-scape.lab")
+# myCert.add_san("dns", "palim.appscape.com")
+# myCert.add_san("ip", "192.168.10.66")
+# myCert.add_san("ip", "192.168.10.67")
+# myCert.gen_priv_key()
+# myCert.create_cert_request()
+# myCert.convert_cert_objects_to_string()
+# myCert.write_cert_objects_to_fs()
 
 #   "commonname": "set_common_name",
 #   "country": "set_country_code",
@@ -112,7 +118,12 @@ from tools import user, token, cert_fs, meta_collector, cert_root, cert_websrv
 # myToken.validate_token(tokenStr, "smtp.app-scape.lab")
 
 
-myUser = user("dquilitzsch")
-myUser.create_passwordhash("Dodger08398!")
-print(myUser.passwordhash)
-myUser.save_user()
+# myUser = user("dquilitzsch")
+# myUser.create_passwordhash("Dodger08398!")
+# print(myUser.passwordhash)
+# myUser.save_user()
+
+
+myHelpers = helpers()
+# myHelpers.chk_san_validity("dns", "mycert.com")
+myHelpers.chk_san_validity("ip", "192.168.10.1233")
