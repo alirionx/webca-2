@@ -116,6 +116,8 @@ export default {
   position: absolute;
   bottom: 4px;
   right: 24px;
+  min-width: 750px;
+  text-align: right;
 }
 .menuBar div{
   display: inline-block;
