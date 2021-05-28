@@ -8,7 +8,7 @@
       <div class="innerBox" style="padding-bottom:14px;">
 
         <div class="iptHl">Full Qualified Domain Name</div>
-        <input type="text" required pattern="^([a-zA-Z0-9._-])+$" v-model="data.fqdn" />
+        <input type="text" required disabled v-model="data.commonname" />
         
         <div class="iptHl">Country</div>
         <select required v-model="data.country" >
@@ -30,7 +30,8 @@
         <div class="iptHl">Email of responsible person</div>
         <input type="email" required v-model="data.email" />
 
-        <div class="iptHl">Subject Alternative Names</div>
+        <!--Macht hier wirklich keinen Sinn!. Request ist Request, so wie er ist. Bei Bedarf neuen Request erzeugen-->
+        <!--div class="iptHl">Subject Alternative Names</div>
         <table class="keyValTbl"><tr>
             <th>
               <select v-model="newSanKey" style="margin-top:0; margin-bottom:0">
@@ -53,7 +54,7 @@
               <div class="miniBtn" @click="remove_san(idx)">remove</div>
             </td>
           </tr></table>
-        </div>
+        </div-->
 
       </div>
 
@@ -73,31 +74,33 @@
 const axios = require('axios');
 
 export default {
-  name: 'RequestAdd',
+  name: 'RequestEdit',
   components: {
 
   },
   props:{
     caObj: Object,
+    data: Object,
     cb: Function,
     fw: Function
   },
   data(){
     return{
-      title: "Add new Certificate Request ("+this.caObj.commonname+")",
+      title: "Edit Certificate Request",
       sanKeys: ["IP", "DNS"],
       newSanKey: "DNS",
-      newSanVal: "",
-      data: {
-        fqdn: "",
-        country: "",
-        state: "",
-        city: "",
-        organization: "",
-        unit: "",
-        email: "",
-        sans: []
-      },
+      newSanVal: "", 
+      tmpData: {},
+      // data: {
+      //   fqdn: "",
+      //   country: "",
+      //   state: "",
+      //   city: "",
+      //   organization: "",
+      //   unit: "",
+      //   email: "",
+      //   sans: []
+      // },
     
     }
   },
@@ -135,7 +138,7 @@ export default {
 
     submit(){
       console.log(this.data);
-      axios.post('/api/req/'+this.caObj.commonname, this.data, ).then(response => { 
+      axios.put('/api/req/'+this.caObj.commonname+'/'+this.data.commonname, this.data, ).then(response => { 
         //this.loader = false;
         console.log(response.data);
         this.fw();
@@ -143,14 +146,21 @@ export default {
       })
       .catch(error => {
         //this.loader = false;
+        this.reset_data();
         console.log(error.response);
         this.$store.state.sysMsg = error.response.data.msg;
         this.$store.dispatch("trigger_reset_sys_msg", 3000);
       });
+    },
+
+    reset_data(){
+      for(var prop in this.tmpData){
+        this.data[prop] = this.tmpData[prop];
+      }
     }
   },
   created: function(){
-    this.data.organization = this.caObj.organization;
+    this.tmpData = JSON.parse(JSON.stringify(this.data));
   },
   mounted: function(){
     

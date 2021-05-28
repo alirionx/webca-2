@@ -30,7 +30,7 @@
 
     <ReqShow v-if="reqShow!=null" 
       v-bind:caname="authority" 
-      v-bind:commonname="reqShow" 
+      v-bind:dataIn="requests[reqShow]" 
       v-bind:cb="()=>{reqShow = null;}" />
 
     <SansShow v-if="sansShow!=null" 
@@ -39,14 +39,25 @@
       v-bind:cb="()=>{sansShow = null;}" />
 
     <RequestAdd v-if="addShow!=null" 
-      v-bind:caname="authority" 
+      v-bind:caObj="get_ca_obj_by_caname(authority)" 
       v-bind:fw="()=>{call_requests();}"
       v-bind:cb="()=>{addShow = null;}" />
+
+    <RequestEdit v-if="editShow!=null" 
+      v-bind:caObj="get_ca_obj_by_caname(authority)" 
+      v-bind:data="requests[editShow]" 
+      v-bind:fw="()=>{call_requests();}"
+      v-bind:cb="()=>{editShow = null;}" />
 
     <ReqUpload v-if="uploadShow!=null" 
       v-bind:caname="authority" 
       v-bind:fw="()=>{call_requests();}"
       v-bind:cb="()=>{uploadShow = null;}" />
+    
+    <SignPeriodSelect v-if="periodSelectShow!=null" 
+      v-bind:authority="authority" 
+      v-bind:data="requests[periodSelectShow]" 
+      v-bind:cb="()=>{periodSelectShow = null; this.call_requests(); }" />
 
   </div>
 </template>
@@ -57,17 +68,21 @@ const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
 import ReqShow from '@/components/ReqShow.vue'
 import RequestAdd from '@/components/RequestAdd.vue'
+import RequestEdit from '@/components/RequestEdit.vue'
 import ReqUpload from '@/components/ReqUpload.vue'
 import SansShow from '@/components/SansShow.vue'
+import SignPeriodSelect from '@/components/SignPeriodSelect.vue'
 
 export default {
   name: 'Requests',
   components: {
     ActMenu,
     RequestAdd,
+    RequestEdit,
     ReqShow,
     ReqUpload,
-    SansShow
+    SansShow,
+    SignPeriodSelect
   },
   data(){
     return{
@@ -116,15 +131,20 @@ export default {
       acts: [
         {
           txt: "show reqest",
-          func: (idx)=>{ this.reqShow = this.requests[idx].commonname; }
+          func: (idx)=>{ this.reqShow = idx; }
         },
         {
           txt: "show sans",
           func: (idx)=>{ this.sansShow = idx; }
         },
         {
+          txt: "edit",
+          func: (idx)=>{ this.editShow = idx; }
+        },
+        {
           txt: "sign",
-          func: (idx)=>{ this.call_sign(idx); }
+          //func: (idx)=>{ this.call_sign(idx); }
+          func: (idx)=>{ this.periodSelectShow = idx; }
         },
         {
           txt: "delete",
@@ -134,9 +154,11 @@ export default {
       activeMenu: null,
       certReq: null,
       addShow: null,
+      editShow: null,
       uploadShow: null,
       reqShow: null,
       sansShow: null,
+      periodSelectShow: null,
     }
   },
   methods:{
@@ -187,21 +209,7 @@ export default {
       this.$store.state.sysConfirmMsg = "Do you really want to sign this request: " + this.requests[idx].commonname;
       this.$store.state.sysConfirmFw = ()=>{this.do_sign(idx)};
     },
-    do_sign(idx){
-      var reqCn = this.requests[idx].commonname;
-      axios.post('/api/cert/'+this.authority+'/'+reqCn, {}, )
-      .then(response => { 
-        //this.loader = false;
-        console.log(response.data);
-        this.call_requests();
-      })
-      .catch(error => {
-        //this.loader = false;
-        console.log(error);
-        this.$store.state.sysMsg = "Failed to sign request: "+reqCn;
-        this.$store.dispatch("trigger_reset_sys_msg", 3000);
-      });
-    },
+    
 
     call_delete(idx){
       this.$store.state.sysConfirmMsg = "Do you really want to delete this request: " + this.requests[idx].commonname;
@@ -220,6 +228,15 @@ export default {
         this.$store.state.sysMsg = "Failed to delete request: "+reqCn;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
+    },
+
+    get_ca_obj_by_caname(caname){
+      for(var idx in this.authorities){
+        if(caname == this.authorities[idx].commonname){
+          return this.authorities[idx];
+        }
+      }
+      return false;
     }
 
   },

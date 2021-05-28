@@ -20,17 +20,23 @@
             @click="()=>{this.activeMenu = idx}" />
         </td>
       </tr>
-      <tr class="lastLine">
-        <td :colspan="defi.length+1" >
-          <button @click="()=>{addShow = true}">add</button>
-        </td>
-      </tr>
     </table>
+
+    <CrtShow v-if="crtShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:dataIn="certificates[crtShow]" 
+      v-bind:cb="()=>{crtShow = null;}" />
 
     <SansShow v-if="sansShow!=null" 
       v-bind:caname="authority" 
       v-bind:data="certificates[sansShow]" 
       v-bind:cb="()=>{sansShow = null;}" />
+
+    <CrtRenew v-if="renewShow!=null" 
+      v-bind:caObj="get_ca_obj_by_caname(authority)" 
+      v-bind:data="certificates[renewShow]" 
+      v-bind:fw="()=>{call_certificates();}"
+      v-bind:cb="()=>{renewShow = null;}" /> 
 
   </div>
 </template>
@@ -40,12 +46,16 @@ import store from '../store'
 const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
 import SansShow from '@/components/SansShow.vue'
+import CrtShow from '@/components/CrtShow.vue'
+import CrtRenew from '@/components/CrtRenew.vue'
 
 export default {
   name: 'Certificates',
   components: {
     ActMenu,
-    SansShow
+    SansShow,
+    CrtShow,
+    CrtRenew
   },
   data(){
     return{
@@ -99,15 +109,15 @@ export default {
       acts: [
         {
           txt: "show cert",
-          func: (idx)=>{ console.log("SHOW: "+idx) }
+          func: (idx)=>{ this.crtShow = idx; }
         },
         {
           txt: "show sans",
           func: (idx)=>{ this.sansShow = idx; }
         },
         {
-          txt: "renew",
-          func: (idx)=>{ console.log("RENEW: "+idx) }
+          txt: "edit / renew",
+          func: (idx)=>{ this.renewShow = idx; }
         },
         {
           txt: "delete",
@@ -116,8 +126,8 @@ export default {
       ],
 
       activeMenu: null,
-      certShow: null,
-      addShow: null,
+      crtShow: null,
+      renewShow: null,
       sansShow: null,
     }
   },
@@ -182,6 +192,15 @@ export default {
         this.$store.state.sysMsg = "Failed to delete certificate: "+crtCn;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
+    },
+
+    get_ca_obj_by_caname(caname){
+      for(var idx in this.authorities){
+        if(caname == this.authorities[idx].commonname){
+          return this.authorities[idx];
+        }
+      }
+      return false;
     }
   },
 

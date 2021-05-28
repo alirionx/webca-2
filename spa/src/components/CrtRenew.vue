@@ -3,13 +3,15 @@
     <form @submit.prevent="submit">
     <div class="stdForm">
       
-      <div class="hl">{{title}}</div>
-      
-      <div class="innerBox" style="padding-bottom:14px;">
+      <div class="hl">{{title}}: "{{data.commonname}}"</div>
 
-        <div class="iptHl">Full Qualified Domain Name</div>
-        <input type="text" required pattern="^([a-zA-Z0-9._-])+$" v-model="data.fqdn" />
-        
+      <div class="innerBox">
+
+        <div class="iptHl">New Validity Period</div>
+        <select required v-model="data.days" >
+          <option v-for="(val, key) in validityPeriods" :key="key" :value="val" >{{key}}</option>
+        </select>
+      
         <div class="iptHl">Country</div>
         <select required v-model="data.country" >
           <option v-for="(val, idx) in $store.state.countryCodes" :key="idx" :value="val">{{val}}</option>
@@ -22,13 +24,13 @@
         <input type="text" v-model="data.city" />
 
         <div class="iptHl">Organization</div>
-        <input type="text" required disabled v-model="data.organization" />
+        <input type="text" disabled v-model="data.organization" />
 
         <div class="iptHl">Organization Unit</div>
-        <input type="text" v-model="data.unit" />
+        <input type="text" disabled v-model="data.unit" />
 
         <div class="iptHl">Email of responsible person</div>
-        <input type="email" required v-model="data.email" />
+        <input type="email" disabled v-model="data.email" />
 
         <div class="iptHl">Subject Alternative Names</div>
         <table class="keyValTbl"><tr>
@@ -50,7 +52,7 @@
             <th>{{san.key}}</th>
             <td>{{san.val}}</td>
             <td>
-              <div class="miniBtn" @click="remove_san(idx)">remove</div>
+              <!--div class="miniBtn" @click="remove_san(idx)">remove</div-->
             </td>
           </tr></table>
         </div>
@@ -58,7 +60,7 @@
       </div>
 
       <div class="btnFrame">
-        <button>Submit</button>
+        <button @click="print_data">Submit</button>
         <button type="button" @click="cb">Cancel</button>
       </div>
 
@@ -71,37 +73,59 @@
 <script>
 //import store from '../store'
 const axios = require('axios');
+//import HelloWorld from '@/components/HelloWorld.vue' 
 
 export default {
-  name: 'RequestAdd',
+  name: 'CrtRenew',
   components: {
-
+    //HelloWorld
   },
   props:{
     caObj: Object,
     cb: Function,
-    fw: Function
+    fw: Function,
+    data: Object
   },
   data(){
     return{
-      title: "Add new Certificate Request ("+this.caObj.commonname+")",
+      title: "Renew Server Certificate",
+      tmpData: {},
+      validityPeriods:{
+        "1 month": 30,
+        "6 month": 180,
+        "1 year": 365,
+        "2 years": 730,
+        "3 years": 1095
+      },
       sanKeys: ["IP", "DNS"],
       newSanKey: "DNS",
       newSanVal: "",
-      data: {
-        fqdn: "",
-        country: "",
-        state: "",
-        city: "",
-        organization: "",
-        unit: "",
-        email: "",
-        sans: []
-      },
-    
     }
   },
   methods:{
+    submit(){
+      console.log(this.data);
+      axios.put('/api/cert/'+this.caObj.commonname+'/'+this.data.commonname, this.data, ).then(response => { 
+        //this.loader = false;
+        console.log(response.data);
+        this.fw();
+        this.cb();
+      })
+      .catch(error => {
+        this.reset_tmp_data();
+        console.log(error.response);
+        //this.$store.state.sysMsg = error.response.data.msg;
+        this.$store.state.sysMsg = "Failed to edit / renew server certificate";
+        this.$store.dispatch("trigger_reset_sys_msg", 3000);
+      });
+    },
+
+    reset_tmp_data(){
+      for(prop in this.tmpData){
+        this.data[prop] = this.tmpData[prop];
+      }
+    },
+
     add_san(){
       if(this.newSanVal.length < 1){
         console.log("empty val...");
@@ -128,29 +152,14 @@ export default {
       //this.newSanKey = "DNS";
       this.newSanVal = "";
     },
-
     remove_san(idx){
       this.data.sans.splice(idx, 1);
     },
 
-    submit(){
-      console.log(this.data);
-      axios.post('/api/req/'+this.caObj.commonname, this.data, ).then(response => { 
-        //this.loader = false;
-        console.log(response.data);
-        this.fw();
-        this.cb();
-      })
-      .catch(error => {
-        //this.loader = false;
-        console.log(error.response);
-        this.$store.state.sysMsg = error.response.data.msg;
-        this.$store.dispatch("trigger_reset_sys_msg", 3000);
-      });
-    }
+  
   },
   created: function(){
-    this.data.organization = this.caObj.organization;
+    this.tmpData =  JSON.parse(JSON.stringify(this.data));
   },
   mounted: function(){
     
@@ -158,7 +167,3 @@ export default {
 
 }
 </script>
-
-<style scoped>
-
-</style>

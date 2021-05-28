@@ -541,10 +541,10 @@ class cert_fs:
     return keyStr
 
   #----------------------------------
-  def write_cert_pkey(self, fqdn, pKeyStr):
+  def write_cert_pkey(self, fqdn, keyStr):
     curKeyPath = os.path.join(self.keysPath, fqdn + endings["key"])
     flObj = open(curKeyPath, "w")
-    flObj.write(pKeyStr)
+    flObj.write(keyStr)
     flObj.close()
 
   #----------------------------------
@@ -938,7 +938,7 @@ class cert_websrv:
     self.reqObj = None
     self.crtObj = None
 
-    self.pKeyStr = None
+    self.keyStr = None
     self.reqStr = None
     self.crtStr = None
     
@@ -1070,7 +1070,7 @@ class cert_websrv:
     chk = []
     if self.pKey:
       keyStr = crypto.dump_privatekey(crypto.FILETYPE_PEM, self.pKey)
-      self.pKeyStr = keyStr.decode("utf-8")
+      self.keyStr = keyStr.decode("utf-8")
       chk.append("key")
 
     if self.reqObj:
@@ -1086,7 +1086,7 @@ class cert_websrv:
     return chk
 
   #----------------------------------
-  def create_cert_request(self):
+  def create_cert_request(self, update=False):
     
     missingSubs = []
     for sub in mandaSubjects:
@@ -1096,9 +1096,12 @@ class cert_websrv:
       raise Exception("please set the following values first: %s" %missingSubs)
     
     #------------------
-    self.reqObj = crypto.X509Req()
-    self.reqObj.set_version(3)
-
+    if not update:
+      self.reqObj = crypto.X509Req()
+    
+    if self.reqObj.get_version() != 2:
+      self.reqObj.set_version(2)
+    
     for classKey, crtKey in subjects.items():
       curVal = getattr(self, classKey)
       if curVal:
@@ -1119,6 +1122,7 @@ class cert_websrv:
 
     #------------
     sanListStrEnc = ", ".join(sanList).encode()
+    #print(sanListStrEnc)
     
     sanObj = [ 
       crypto.X509Extension(type_name=b"basicConstraints", critical=False, value=b"CA:FALSE" ),
@@ -1126,14 +1130,18 @@ class cert_websrv:
       crypto.X509Extension(type_name=b"extendedKeyUsage", critical=False, value=b"serverAuth" ),
       crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=sanListStrEnc)
     ]
+
+    #SANS können im Request mit pyOpenSSL nachträglich nicht verändert werden. 
+    #Zumindest habe ich nach 10h nicht rausgefunden wie...
     self.reqObj.add_extensions(sanObj)
 
     #------------------
+    #if not update:
     self.reqObj.set_pubkey(self.pKey)
     self.reqObj.sign(self.pKey, 'sha512') # Noch mehr Drecksack!!!!!!!!!!!!!!!!!!!!!!!!
-  
+
   #----------------------------------
-  def sign_cert(self):
+  def sign_cert(self, days=None):
     # if not self.pKey or not self.reqObj:
     #   raise Exception("Please create/load key and req first")
     if not self.reqObj:
@@ -1144,8 +1152,13 @@ class cert_websrv:
 
     myHelpers = helpers()
     self.crtObj.set_serial_number(myHelpers.gen_rendom_sn())
+    
+    if days:
+      renewPeriod = days*24*60*60
+    else:
+      renewPeriod = self.renewTime
     self.crtObj.gmtime_adj_notBefore(0)
-    self.crtObj.gmtime_adj_notAfter(self.renewTime)
+    self.crtObj.gmtime_adj_notAfter(renewPeriod)
 
     self.crtObj.set_issuer(self.caCrtObj.get_subject())
     self.crtObj.set_subject(self.reqObj.get_subject())
@@ -1165,7 +1178,7 @@ class cert_websrv:
     myCertFs = cert_fs(self.caname)
 
     if "key" in res:
-      myCertFs.write_cert_pkey(fqdn=self.commonname, pKeyStr=self.pKeyStr)
+      myCertFs.write_cert_pkey(fqdn=self.commonname, keyStr=self.keyStr)
 
     if "req" in res:
       myCertFs.write_cert_req(fqdn=self.commonname, reqStr=self.reqStr)
@@ -1187,6 +1200,7 @@ class cert_websrv:
       self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     except Exception as e:
       print(e)
+      self.keyStr = "Key not available. \nAsk requester ;)"
 
     for classKey, crtKey in subjects.items():
       if hasattr(self.reqObj.get_subject(), crtKey):
@@ -1225,6 +1239,7 @@ class cert_websrv:
       self.keyStr = myCertFs.get_key_str(fqdn=self.commonname)
       self.pKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.keyStr)
     except Exception as e:
+      self.keyStr = "Key not available. \nAsk requester ;)"
       print(e)
     
     for classKey, crtKey in subjects.items():
@@ -1242,8 +1257,9 @@ class cert_websrv:
   
   #----------------------------------
   def renew_cert(self, days=None):
-    if not self.crtObj or not self.pKey:
-      raise Exception("Please generate or load a certificate and private key first")
+    #if not self.crtObj or not self.pKey:
+    if not self.crtObj:
+      raise Exception("Please generate or load a certificate")
     
     for classKey, crtKey in subjects.items():
       curVal = getattr(self, classKey)
@@ -1255,14 +1271,58 @@ class cert_websrv:
     else:
       renewPeriod = self.renewTime
 
+    #UIUIUIUIUIUIUIU WZF!!!---------------------
+    sanScanObj = {
+      "IP": [],
+      "DNS": []
+    }
+    x = self.crtObj.get_extension_count()
+    for i in range(x):
+      extStr = str( self.crtObj.get_extension(i) )
+      extSplt = extStr.split(", ")
+      for extStrSplt in extSplt:
+        for key, tmp in sanScanObj.items():
+          if extStrSplt.startswith(key):
+            try: 
+              extVal = extStrSplt.split(":")[1].replace(" ", "")
+              sanScanObj[key].append(extVal)
+            except: 
+              continue 
+    #print(sanScanObj)
+    
+    #------------
+    sanList = []
+    for sanObj in self.sans:
+      try:
+        if sanObj["val"] not in sanScanObj[sanObj["key"]]:
+          sanList.append( sanObj["key"]+": {0}".format(sanObj["val"]) )
+      except Exception as e:
+        print(e)
+
+    #------------
+    if len(sanList) > 0:
+      sanListStrEnc = ", ".join(sanList).encode()
+      sanObj = [ 
+        crypto.X509Extension(type_name=b"subjectAltName", critical=False, value=sanListStrEnc)
+      ]
+      self.crtObj.add_extensions(sanObj)
+
+    #UIUIUIUIUIUIUIU WZF!!!---------------------
+
+    #-------------
+
     self.crtObj.gmtime_adj_notBefore(0)
     self.crtObj.gmtime_adj_notAfter(renewPeriod)
 
-    self.crtObj.set_issuer(self.crtObj.get_subject())
-    self.crtObj.set_pubkey(self.pKey)
-    self.crtObj.sign(self.pKey, 'sha512')
+    # Das die 4 methoden raus müssen is auch ganz einfach rauszufinden... WZF!
+    #self.crtObj.set_issuer(self.crtObj.get_subject())  
+    #self.crtObj.set_pubkey(self.pKey)
+    #self.crtObj.set_pubkey(self.caKeyObj)
+    #self.crtObj.sign(self.pKey, 'sha512')
+    self.crtObj.sign(self.caKeyObj, 'sha512')
 
-  #----------------------------------
+
+  #--------------------------------------------------------------
   def get_meta_data(self, req=False):
     if req: 
       self.load_req_from_fs()

@@ -5,12 +5,19 @@
     <div class="stdForm" style="margin-top:6vh">
 
       <div class="hl">{{title}}</div>
-      <!--div class="innerBox"-->
-        <div class="iptHl" style="font-size:14px">Request (PEM)</div>
-        <textarea class="certBox" disabled v-model="data.req"></textarea>
+      <div class="innerBox">
+        <div class="iptHl" style="font-size:14px">Cert (PEM)</div>
+        <textarea class="certBox" disabled v-model="data.crt"></textarea>
         <div class="icoBar">
-          <img src="@/assets/icon_copy.svg" @click="copy_text(data.req)" />
-          <img src="@/assets/icon_download.svg" @click="dl_text_as_file(dataIn.commonname+'_req.pem', data.req)" />
+          <img src="@/assets/icon_copy.svg" @click="copy_text(data.crt)" />
+          <img src="@/assets/icon_download.svg" @click="dl_text_as_file(dataIn.commonname+'_crt.pem', data.crt)" />
+        </div>
+
+        <div class="iptHl" style="font-size:14px">Full Chain (PEM)</div>
+        <textarea class="certBox" disabled v-model="data.fullchain"></textarea>
+        <div class="icoBar">
+          <img src="@/assets/icon_copy.svg" @click="copy_text(data.fullchain)" />
+          <img src="@/assets/icon_download.svg" @click="dl_text_as_file(dataIn.commonname+'_fullchain.pem', data.fullchain)" />
         </div>
 
         <div class="iptHl" style="font-size:14px">Key (PEM)</div>
@@ -20,7 +27,7 @@
           <img src="@/assets/icon_download.svg" @click="dl_text_as_file(dataIn.commonname+'_key.pem', data.key)" />
         </div>
 
-      <!--/div-->
+      </div>
       <div class="btnFrame">
         <button @click="cb">Ok</button>
       </div>
@@ -34,7 +41,7 @@
 const axios = require('axios');
 
 export default {
-  name: 'ReqShow',
+  name: 'CrtShow',
   components: {
   },
   props:{
@@ -44,13 +51,13 @@ export default {
   },
   data(){
     return{
-      title: "Request: " +this.dataIn.commonname+ " ("+this.caname+")",
+      title: "Certificate: " +this.dataIn.commonname+ " ("+this.caname+")",
       data: {}
     }
   },
   methods:{
-    call_cert_request(){
-      var url = '/api/reqpem/'+this.caname+'/'+this.dataIn.commonname;
+    call_cert(){
+      var url = '/api/crtpem/'+this.caname+'/'+this.dataIn.commonname;
       axios.get(url)
       .then((response)=> {
         console.log(response.data);
@@ -60,7 +67,7 @@ export default {
       .catch((err)=> {
         // handle error
         console.log(err.response);
-        this.$store.state.sysMsg = "Failed to load root cert from API: "+url ;
+        this.$store.state.sysMsg = "Failed to load cert from API: "+url ;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
     },
@@ -90,7 +97,7 @@ export default {
 
   },
   created: function(){
-    this.call_cert_request();
+    this.call_cert();
   },
   mounted: function(){
   }

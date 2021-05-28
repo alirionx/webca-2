@@ -8,7 +8,7 @@
       <div class="innerBox">
 
         <div class="iptHl">Common Name</div>
-        <input type="text" required pattern="[a-z/.-]+[a-z]{2}$" v-model="data.commonname" />
+        <input type="text" required pattern="^([a-zA-Z0-9._-])+$" v-model="data.commonname" />
         
         <div class="iptHl">Country</div>
         <select required v-model="data.country" >

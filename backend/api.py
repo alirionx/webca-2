@@ -55,9 +55,11 @@ auth = HTTPBasicAuth()
 @app.before_first_request
 def before_everything():
   inf = "Do something here???"
-  session["username"] = None
-  session["role"] = None
-  
+  # session["username"] = None
+  # session["role"] = None
+  session["username"] = "dquilitzsch"
+  session["role"] = "admin"
+
 #--------------------------------
 @app.before_request
 def check_before_every_request():
@@ -294,6 +296,13 @@ def api_ca_put(ca):
   #-----------------------
   putIn = request.json
   try:
+    del putIn["commonname"]
+    del putIn["organization"]
+  except:
+    inf = "U R so fuggin LAZY"
+  
+  #-----------------------
+  try:
     myRootCert = cert_root(ca)
     myRootCert.load_cert_from_fs()
   except Exception as e:
@@ -304,7 +313,7 @@ def api_ca_put(ca):
 
   #-----------------------
   for key, funcStr in caFuncMap.items():
-    if key in putIn and key != "commonname": # Schrott, aber hier sei es dir verziehen...
+    if key in putIn:
       try:
         curFunc = getattr(myRootCert, funcStr)
         curFunc(putIn[key])
@@ -456,6 +465,46 @@ def api_cert_get(ca, fqdn):
   #---------------------
   return jsonify(resObj), 200
 
+
+#-------------------------------------------
+@app.route('/api/crtpem/<ca>/<fqdn>', methods=["GET"])
+def api_crtpem_get(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": "",
+    "data": {}
+  }
+
+  #---------------------
+  try:
+    myCa = cert_root(ca)
+    myCa.load_cert_from_fs()
+  except Exception as e:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  try:
+    myCrt = cert_websrv(ca, fqdn)
+    myCrt.load_cert_from_fs()
+    resObj["data"] = {
+      "crt": myCrt.crtStr,
+      "fullchain": myCrt.crtStr + myCa.crtStr,
+      "key": myCrt.keyStr
+    }
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failes to load Certificate: '%s'" %fqdn
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+
+  #---------------------
+  return jsonify(resObj), 200
+
 #-------------------------------------------
 @app.route('/api/cert/<ca>/<fqdn>', methods=["POST"])
 def api_cert_post(ca, fqdn):
@@ -483,10 +532,16 @@ def api_cert_post(ca, fqdn):
     return jsonify(resObj), 400
   
   #---------------------
+  postData = request.json
+  days = None
+  if "days" in postData:
+    days = int(postData["days"])
+
+  print(days)
   try:
     myCert = cert_websrv(ca, fqdn)
     myCert.load_req_from_fs()
-    myCert.sign_cert()
+    myCert.sign_cert(days)
     myCert.convert_cert_objects_to_string()
     myCert.write_cert_objects_to_fs()
   except Exception as e:
@@ -507,27 +562,68 @@ def api_cert_put(ca, fqdn):
     "path": request.path,
     "method": request.method,
     "status": 200,
-    "msg": ""
+    "msg": []
   }
 
   #---------------------
-  myMetaColl = meta_collector()
-  caAry = myMetaColl.list_cas()
-  if ca not in caAry:
-    resObj["msg"] = "CA does not exist: '%s'" %ca
+  try:
+    myCrt = cert_websrv(ca, fqdn)
+    myCrt.load_cert_from_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"].append("Failed to load certificate: %s" %e)
     resObj["status"] = 404
     return jsonify(resObj), 404
 
   #---------------------
-  myCertFs = cert_fs(ca)
-  crtAry = myCertFs.list_certificates()
-  if fqdn not in crtAry:
-    resObj["msg"] = "A certificate for '%s' does not exist" %fqdn
-    resObj["status"] = 400
-    return jsonify(resObj), 400
+  putData = request.json
+  try:
+    del putData["commonname"]
+    del putData["organization"]
+  except:
+    inf = "U R so fuggin LAZY"
+
+  for key, funcStr in certFuncMap.items():
+    if key in putData:
+      try:
+        curFunc = getattr(myCrt, funcStr)
+        curFunc(putData[key])
+      except Exception as e:
+        print(e)
+        resObj["msg"].append("Failed to add %s" %key)
+        continue
+  
+  #-----------------------
+  if "sans" in putData:
+    myCrt.sans = []
+    sansAry = putData["sans"]
+    for sanObj in sansAry:
+      try:
+        myCrt.add_san(sanObj["key"], sanObj["val"])
+      except Exception as e:
+        print(e)
+        resObj["msg"].append("failed to add san: %s" %str(sanObj))
+        continue
+
+  #---------------------
+
+  days = None
+  if "days" in putData:
+    days = int(putData["days"])
+  try:
+    myCrt.renew_cert(days)
+    myCrt.convert_cert_objects_to_string()
+    myCrt.write_cert_objects_to_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to edit cert: %s"%putData
+    resObj["status"] = 500
+    return jsonify(resObj), 500
 
   #---------------------
   return jsonify(resObj), 200
+
+
 
 #-------------------------------------------
 @app.route('/api/cert/<ca>/<fqdn>', methods=["DELETE"])
@@ -672,7 +768,6 @@ def api_reqpem_get(ca, fqdn):
   #---------------------
   return jsonify(resObj), 200
 
-
 #-------------------------------------------
 @app.route('/api/req/<ca>', methods=["POST"]) # Create Cert Request
 def api_req_post(ca):
@@ -709,7 +804,15 @@ def api_req_post(ca):
     return jsonify(resObj), 400
 
   #---------------------
-  myCert = cert_websrv(ca, fqdn)
+  try:
+    myCert = cert_websrv(ca, fqdn)
+  except Exception as e:
+    print(e)
+    resObj["msg"].append("Failed to create request: %s" %e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
   for key, funcStr in certFuncMap.items():
     if key in postData:
       try:
@@ -739,7 +842,7 @@ def api_req_post(ca):
     myCert.write_cert_objects_to_fs()
   except Exception as e:
     print(e)
-    resObj["msg"] = "Failed to create cert: %s" %e
+    resObj["msg"] = "Failed to create cert: %s"%postData
     resObj["status"] = 500
     return jsonify(resObj), 500
 
@@ -747,6 +850,71 @@ def api_req_post(ca):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/req/<ca>/<fqdn>', methods=["PUT"]) # Edit Cert Request
+def api_req_put(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": []
+  }
+
+  #---------------------
+  try:
+    myReq = cert_websrv(ca, fqdn)
+    myReq.load_req_from_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"].append("Failed to load request: %s" %e)
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  putData = request.json
+  try:
+    del putData["commonname"]
+    del putData["organization"]
+  except:
+    inf = "U R so fuggin LAZY"
+
+  for key, funcStr in certFuncMap.items():
+    if key in putData:
+      try:
+        curFunc = getattr(myReq, funcStr)
+        curFunc(putData[key])
+      except Exception as e:
+        print(e)
+        resObj["msg"].append("Failed to add %s" %key)
+        continue
+
+  #-----------------------
+  ####Macht hier wirklich keinen Sinn!. Request ist Request, so wie er ist. Bei Bedarf neuen Request erzeugen
+  
+  # if "sans" in putData:
+  #   myReq.sans = []
+  #   sansAry = putData["sans"]
+  #   for sanObj in sansAry:
+  #     try:
+  #       myReq.add_san(sanObj["key"], sanObj["val"])
+  #     except Exception as e:
+  #       print(e)
+  #       resObj["msg"].append("failed to add san: %s" %str(sanObj))
+  #       continue
+
+  #---------------------
+  try:
+    myReq.create_cert_request(update=True)
+    myReq.convert_cert_objects_to_string()
+    myReq.write_cert_objects_to_fs()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to edit cert: %s"%putData
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
+
 
 #-------------------------------------------
 @app.route('/api/req/upload/<ca>', methods=["POST"]) # Upload Cert Request

@@ -56,7 +56,7 @@ body{
 .stdForm{
   display: inline-block;
   margin: 6vh auto auto auto;
-  min-width:550px;
+  min-width:570px;
   min-height:100px;
   text-align:left;
   padding:24px;
@@ -119,6 +119,10 @@ body{
   border-radius: 3px;
   background-color:#fff;
   font-size: 15px;
+}
+.stdForm select[disabled]{
+  background-color: #eee;
+  color:#000;
 }
 
 .stdForm .msgBox{
