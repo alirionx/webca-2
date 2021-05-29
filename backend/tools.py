@@ -245,6 +245,8 @@ class user:
     for val in self.valList:
       if val in usrObj:
         setattr(self, val, usrObj[val])
+      else:
+        setattr(self, val, None)
 
   #----------------------------------
   def set_role(self, role):
@@ -282,11 +284,12 @@ class user:
 
     savUsrObj = {}
     missingVals = []
-    for val in self.mandaValsList:
-      if not getattr(self, val):
-        missingVals.append(val)
-      else:
+    for val in self.valList:
+      if getattr(self, val):
         savUsrObj[val] = getattr(self, val)
+      
+      if not getattr(self, val) and val in missingVals:
+        missingVals.append(val)
     
     if len(missingVals) > 0:
       raise Exception("failed to create user. The following values are missing: %s" %missingVals)

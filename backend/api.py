@@ -1003,6 +1003,32 @@ def api_req_delete(ca, fqdn):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/users', methods=["GET"])
+def api_users_get():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  #---------------------
+  resObj["data"] = []
+  myUsr = user()
+  usrList = myUsr.get_users_list()
+  for usrName in usrList:
+    try:
+      myUsr.load_user(usrName)
+      usrObj = myUsr.get_meta_data()
+      resObj["data"].append(usrObj)
+    except Exception as e:
+      print(e)
+      continue
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
 
 #-------------------------------------------
 
