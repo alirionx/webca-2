@@ -125,6 +125,12 @@ export default {
     },
 
     call_delete(idx){
+      if(this.data[idx].username == this.$store.state.username){
+        this.$store.state.sysMsg = "Delete yourself -> no way ;)";
+        this.$store.dispatch("trigger_reset_sys_msg", 3000);
+        return false;
+      }
+
       this.$store.state.sysConfirmMsg = "Do you really want to delete this user: " + this.data[idx].username;
       this.$store.state.sysConfirmFw = ()=>{this.do_delete(idx)};
     },
