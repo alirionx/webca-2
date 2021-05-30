@@ -60,6 +60,9 @@ def before_everything():
   session["username"] = "dquilitzsch"
   session["role"] = "admin"
 
+  myHelpers = helpers()
+  myHelpers.chk_base_folder()
+
 #--------------------------------
 @app.before_request
 def check_before_every_request():
@@ -1013,6 +1016,15 @@ def api_users_get():
   }
   
   #---------------------
+  try:
+    myMetaColl = meta_collector()
+    resObj["cas"] = myMetaColl.list_cas()
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
   resObj["data"] = []
   myUsr = user()
   usrList = myUsr.get_users_list()
@@ -1027,6 +1039,100 @@ def api_users_get():
   
   #---------------------
   return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/user', methods=["POST"])
+def api_user_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  #---------------------
+  postIn = request.json
+
+  #---------------------
+  myUsr = user()
+  for val in myUsr.valList:
+    if val in postIn:
+      setattr(myUsr, val, postIn[val])
+
+  try:
+    myUsr.create_user()
+    #myUsr.save_user()
+  except Exception as e:
+    #print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/user', methods=["PUT"])
+def api_user_put():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  #---------------------
+  putIn = request.json
+  
+  #---------------------
+  try:
+    myUsr = user(putIn["username"])
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  del putIn["username"] #LAAAAZY
+
+  #---------------------
+  for val in myUsr.valList:
+    if val in putIn:
+      setattr(myUsr, val, putIn[val])
+
+  try:
+    myUsr.save_user()
+  except Exception as e:
+    #print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/user/<uname>', methods=["DELETE"])
+def api_user_delete(uname):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  #---------------------
+  try:
+    myUsr = user(uname)
+    myUsr.delete_user()
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
 
 #-------------------------------------------
 

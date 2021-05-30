@@ -50,6 +50,11 @@ class helpers:
     inf = "helpers object created"
 
   #----------------------------------
+  def chk_base_folder(self):
+    if not os.path.isdir(baseFolderPath):
+      os.mkdir(baseFolderPath)
+
+  #----------------------------------
   def gen_rendom_sn(self, bits=64):
     ranSn = random.getrandbits(bits)
     return ranSn
@@ -156,7 +161,7 @@ class helpers:
 class user:
   #----------------------------------
   valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department"]
-  mandaValsList = ["username", "role", "passwordhash"]
+  mandaValsList = ["username", "role"]
   roles = ["admin", "caadmin", "requester"]
   #----------------------------------
   def __init__(self, username=None):
@@ -170,7 +175,7 @@ class user:
     self.email = None
     self.role = None
     self.passwordhash = None
-    self.domains = []
+    self.domains = {}
     self.firstname = None
     self.lastname = None
     self.department = None
@@ -259,6 +264,10 @@ class user:
   def create_user(self):
     newUsrObj = {}
     missingVals = []
+    for val in self.valList:
+      if getattr(self, val):
+        newUsrObj[val] = getattr(self, val)
+
     for val in self.mandaValsList:
       if not getattr(self, val):
         missingVals.append(val)
