@@ -89,12 +89,12 @@ export default {
           func: (idx)=>{ this.editAddShow = idx; }
         },
         {
-          txt: "show domains",
-          func: (idx)=>{ this.domainsShow = idx; }
+          txt: "set password",
+          func: (idx)=>{ this.resetPwdShow = idx; }
         },
         {
-          txt: "reset pwd",
-          func: (idx)=>{ this.resetPwdShow = idx; }
+          txt: "invite lnk",
+          func: (idx)=>{ console.log("invite: " + idx); }
         },
         {
           txt: "delete",
