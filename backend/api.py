@@ -504,6 +504,30 @@ def api_crtpem_get(ca, fqdn):
     resObj["status"] = 500
     return jsonify(resObj), 500
 
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/cert/token/<ca>/<fqdn>', methods=["GET"])
+def api_cert_token_get(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": "",
+  }
+
+  #---------------------
+  try:
+    myToken = token()
+    myToken.load_token(ca, fqdn)
+    resObj["data"] = {
+      "ca": myToken.ca,
+      "fqdn": myToken.fqdn,
+      "token": myToken.token
+    }
+  except:
+    resObj["data"] = { "token": None }
 
   #---------------------
   return jsonify(resObj), 200
@@ -1133,8 +1157,46 @@ def api_user_delete(uname):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/user/pwd', methods=["POST"])
+def api_user_pwd_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  #---------------------
+  postIn = request.json
+  try:
+    usr = postIn["username"]
+    pwd = postIn["password"]
+  except:
+    resObj["msg"] = "Post data incomplete. Username and password val missing"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  try:
+    myUsr = user(usr)
+    myUsr.create_passwordhash(pwd)
+    myUsr.save_user()
+  except Exception as e:
+    #print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  return jsonify(resObj), 200
 
 #-------------------------------------------
+
+#-------------------------------------------
+
+
+#-------------------------------------------
+
 
 #-------------------------------------------
 

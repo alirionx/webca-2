@@ -38,6 +38,11 @@
       v-bind:fw="()=>{call_certificates();}"
       v-bind:cb="()=>{renewShow = null;}" /> 
 
+    <ApiToken v-if="apiTokShow!=null" 
+      v-bind:caname="authority" 
+      v-bind:crtObj="certificates[apiTokShow]" 
+      v-bind:cb="()=>{apiTokShow = null;}" />
+
   </div>
 </template>
 
@@ -48,6 +53,7 @@ import ActMenu from '@/components/ActMenu.vue'
 import SansShow from '@/components/SansShow.vue'
 import CrtShow from '@/components/CrtShow.vue'
 import CrtRenew from '@/components/CrtRenew.vue'
+import ApiToken from '@/components/ApiToken.vue'
 
 export default {
   name: 'Certificates',
@@ -55,7 +61,8 @@ export default {
     ActMenu,
     SansShow,
     CrtShow,
-    CrtRenew
+    CrtRenew,
+    ApiToken
   },
   data(){
     return{
@@ -120,6 +127,10 @@ export default {
           func: (idx)=>{ this.renewShow = idx; }
         },
         {
+          txt: "api token",
+          func: (idx)=>{ this.apiTokShow = idx; }
+        },
+        {
           txt: "delete",
           func: (idx)=>{ this.call_delete(idx); }
         }
@@ -129,6 +140,7 @@ export default {
       crtShow: null,
       renewShow: null,
       sansShow: null,
+      apiTokShow: null,
     }
   },
   methods:{

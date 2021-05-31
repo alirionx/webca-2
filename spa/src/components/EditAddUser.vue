@@ -8,7 +8,11 @@
       <div class="innerBox">
 
         <div class="iptHl">Username</div>
-        <input type="text" required pattern="^[a-zA-Z]{4,10}" placeholder="min 4 max 10 chars and no special chars" v-model="data.username" />
+        <input type="text" required 
+          :disabled="mode=='Edit'"
+          pattern="^[a-zA-Z]{4,16}" 
+          placeholder="min 4 max 10 chars and no special chars" 
+          v-model="data.username" />
         
         <div class="iptHl">Email Address</div>
         <input type="email" required v-model="data.email" />

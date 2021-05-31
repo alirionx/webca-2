@@ -30,6 +30,10 @@
       v-bind:fw="()=>{call_users();}"
       v-bind:cb="()=>{editAddShow = null;}" />
 
+    <SetPwd v-if="setPwdShow!=null" 
+      v-bind:usrObj="data[setPwdShow]"
+      v-bind:cb="()=>{setPwdShow = null;}" />
+
   </div>
 </template>
 
@@ -38,12 +42,14 @@
 const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
 import EditAddUser from '@/components/EditAddUser.vue'
+import SetPwd from '@/components/SetPwd.vue'
 
 export default {
   name: 'Users',
   components: {
     ActMenu,
-    EditAddUser
+    EditAddUser,
+    SetPwd
   },
   data(){
     return{
@@ -90,7 +96,7 @@ export default {
         },
         {
           txt: "set password",
-          func: (idx)=>{ this.resetPwdShow = idx; }
+          func: (idx)=>{ this.setPwdShow = idx; }
         },
         {
           txt: "invite lnk",
@@ -104,7 +110,7 @@ export default {
       activeMenu: null,
       editAddShow: null,
       domainsShow: null,
-      resetPwdShow: null,
+      setPwdShow: null,
 
     }
   },
