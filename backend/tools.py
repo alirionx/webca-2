@@ -354,6 +354,7 @@ class token:
     self.ca = None
     self.fqdn = None
     self.token = None
+    self.renewal = 30
 
     if ca and fqdn: self.load_token(ca, fqdn)
 
@@ -362,7 +363,8 @@ class token:
     flObj = open(accessFilePath, "r")
     objIn = yaml.safe_load(flObj)
     flObj.close()
-    tokensAry = objIn["tokens"]
+    #tokensAry = objIn["tokens"]
+    tokensAry = self.get_tokens_array()
     caTokensList = []
     for token in tokensAry:
       caTokensList.append( {token["ca"]: token["fqdn"]} )
@@ -374,8 +376,12 @@ class token:
     flObj = open(accessFilePath, "r")
     objIn = yaml.safe_load(flObj)
     flObj.close()
-    tokensAry = objIn["tokens"]
-
+    
+    if type(objIn["tokens"]) == list:
+      tokensAry = objIn["tokens"]
+    else:
+      tokensAry = []
+    
     return tokensAry
   
   #----------------------------------
@@ -404,6 +410,7 @@ class token:
         self.ca = token["ca"]
         self.fqdn = token["fqdn"]
         self.token = token["token"]
+        self.renewal = token["renewal"]
         break
       else:
         i+=1
@@ -424,6 +431,13 @@ class token:
     self.fqdn = fqdn
 
   #----------------------------------
+  def set_renewal(self, days):
+    if type(days) == int:
+      self.renewal = days
+    else:
+      return False
+      
+  #----------------------------------
   def create_token_string(self):
     if not self.ca or not self.fqdn:
       raise Exception("Please define ca and fqdn first")
@@ -442,7 +456,8 @@ class token:
     tokenObj = {
       "fqdn": self.fqdn,
       "ca": self.ca,
-      "token": self.token
+      "token": self.token,
+      "renewal": self.renewal
     }
     tokensAry = self.get_tokens_array()
     if self.tokensArrayId == None:
@@ -452,6 +467,7 @@ class token:
       tokensAry.append(tokenObj)
     else:
       tokensAry[self.tokensArrayId] = tokenObj
+
 
     self.save_tokens_array(tokensAry)
   

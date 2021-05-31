@@ -508,6 +508,64 @@ def api_crtpem_get(ca, fqdn):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+
+@app.route('/api/cert/token/generate', methods=["POST"])
+def api_cert_token_generate_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": "",
+  }
+
+  #---------------------
+  postIn = request.json
+  try:
+    caname = postIn["caname"]
+    fqdn = postIn["commonname"]
+  except:
+    resObj["msg"] = "JSON Input is missing! Please try again..."
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  try:
+    renewal = int(postIn["renewal"])
+  except Exception as e:
+    print(e)
+    renewal = None
+
+  #---------------------
+  try: 
+    myToken = token()
+    myToken.load_token(caname, fqdn)
+    myToken.delete_token()
+  except: 
+    inf = "SCHROTT"
+
+  #---------------------
+  try:
+    myToken = token()
+    myToken.set_ca_fqdn(caname, fqdn)
+    myToken.create_token_string()
+    myToken.set_renewal(renewal)
+    myToken.save_token()
+    resObj["data"] = {
+      "ca": myToken.ca,
+      "fqdn": myToken.fqdn,
+      "token": myToken.token,
+      "renewal": myToken.renewal
+    }
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to create new token"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
 @app.route('/api/cert/token/<ca>/<fqdn>', methods=["GET"])
 def api_cert_token_get(ca, fqdn):
   resObj = {
@@ -524,10 +582,32 @@ def api_cert_token_get(ca, fqdn):
     resObj["data"] = {
       "ca": myToken.ca,
       "fqdn": myToken.fqdn,
-      "token": myToken.token
+      "token": myToken.token,
+      "renewal": myToken.renewal
     }
   except:
     resObj["data"] = { "token": None }
+
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/cert/token/<ca>/<fqdn>', methods=["DELETE"])
+def api_cert_token_delete(ca, fqdn):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": "",
+  }
+
+  #---------------------
+  try:
+    myToken = token()
+    myToken.load_token(ca, fqdn)
+    myToken.delete_token()
+  except:
+    resObj["msg"] = "Failed to delete token: %s , %s" %(ca, fqdn)
 
   #---------------------
   return jsonify(resObj), 200

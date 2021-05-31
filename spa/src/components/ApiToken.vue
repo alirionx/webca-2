@@ -1,6 +1,5 @@
 <template>
   <div class="blocker">
-    <form @submit.prevent="submit">
     <div class="stdForm">
       
       <div class="hl">{{title}}</div>
@@ -10,19 +9,26 @@
         <div class="tokenBox">
           {{data.token}}
           <div class="blender"></div>
-          <img src="@/assets/icon_copy.svg" />
+          <img src="@/assets/icon_copy.svg" @click="copy_text(data.token)" />
+          <!--img src="@/assets/icon_gear.svg" @click="generate_token" /-->
         </div>
+
+        
       </div>
 
-  
-     
+      <div class="iptHl">Renewal Period</div>
+      <select required v-model="renewal" >
+        <option v-for="(val, key) in renewalPeriods" :key="key" :value="val" >{{key}}</option>
+      </select>
+      
       <div class="btnFrame">
-        <button >Submit</button>
-        <button type="button" @click="cb">Cancel</button>
+        <button type="button" v-if="data.token && renewal!=data.renewal" @click="generate_token">Re-Generate</button>
+        <button type="button" v-if="data.token" @click="delete_token">Delete</button>
+        <button type="button" v-else @click="generate_token">Generate</button>
+        <button type="button" @click="cb">Close</button>
       </div>
 
     </div>
-    </form>
       
   </div>
 </template>
@@ -45,6 +51,14 @@ export default {
     return{
       title: "Manage API Token for Certificate: "+this.crtObj.commonname,
       data: {},
+      renewal: 30,
+      renewalPeriods:{
+        "1 month": 30,
+        "2 month": 60,
+        "3 month": 90,
+        "6 month": 180,
+        "1 year": 365
+      },
     }
   },
   methods:{
@@ -54,11 +68,49 @@ export default {
       .then((response)=> {
         console.log(response.data);
         this.data = response.data.data;
+        if(this.data.renewal != undefined){
+          this.renewal = this.data.renewal;
+        }
       })
       .catch((err)=> {
         // handle error
         console.log(err.response);
         this.$store.state.sysMsg = "Failed to call token state for: "+this.crtObj.commonname;
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
+    },
+    
+    generate_token(){
+      const data = {
+        caname: this.caname,
+        commonname: this.crtObj.commonname,
+        renewal: this.renewal
+      }
+      axios.post('/api/cert/token/generate', data)
+      .then((response)=> {
+        console.log(response.data);
+        this.data = response.data.data;
+        this.$store.state.sysMsg = "New Token generated!";
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
+      .catch((err)=> {
+        // handle error
+        console.log(err.response);
+        this.$store.state.sysMsg = "Failed to generate new token";
+        this.$store.dispatch("trigger_reset_sys_msg", 2000);
+      })
+    },
+
+    delete_token(){
+      axios.delete('/api/cert/token/'+this.caname+'/'+this.crtObj.commonname)
+      .then((response)=> {
+        console.log(response.data);
+        this.call_token_state();
+      })
+      .catch((err)=> {
+        // handle error
+        console.log(err.response);
+        this.$store.state.sysMsg = "Failed to delete token";
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
     },
@@ -79,6 +131,19 @@ export default {
       // });
     },
 
+    copy_text(txt){ //OLD SCHOOL ;)
+      //console.log(txt);
+      var tmpTextBox = document.createElement("textarea");
+      document.body.appendChild(tmpTextBox);
+      //tmpTextBox.style.visibility = "hidden";
+      tmpTextBox.value = txt;
+      tmpTextBox.select();
+      document.execCommand("copy");
+      tmpTextBox.parentNode.removeChild(tmpTextBox);
+      this.$store.state.sysMsg = "content copied to clipboard" ;
+      this.$store.dispatch("trigger_reset_sys_msg", 800);
+    },
+
   },
   created: function(){
     this.call_token_state();
@@ -94,6 +159,8 @@ export default {
 .tokenBox{
   position: relative;
   max-width: 535px;
+  min-height: 16px;
+  line-height: 16px;
   padding: 14px;
   margin: 2px 0 8px 0;
   box-shadow: 0px 1px 2px #666;
