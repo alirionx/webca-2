@@ -1301,13 +1301,13 @@ def api_token_cert_get():
   except:
     return "'jwt' Token missing in Headers", 400
 
-  jwt = jwt.replace(" ", "")
-  splt = jwt.split(":")
-  fqdn = splt[0]
-  tokenStr = splt[1]
+  # jwt = jwt.replace(" ", "")
+  # splt = jwt.split(":")
+  # fqdn = splt[0]
+  # tokenStr = splt[1]
   
   myToken = token()
-  resObj = myToken.validate_token(tokenStr, fqdn)
+  resObj = myToken.validate_token(jwt)
   if not resObj:
     return "Invalid token or FQDN", 400
 
@@ -1317,10 +1317,10 @@ def api_token_cert_get():
   except:
     return "Invalid payload", 400
 
-  try:
-    myToken.load_token(caname, fqdn)
-  except Exception as e:
-    print(e)
+  # try:
+  #   myToken.load_token(caname, fqdn)
+  # except Exception as e:
+  #   print(e)
 
   myCa = cert_root(caname) 
   myCa.load_cert_from_fs()
@@ -1342,31 +1342,19 @@ def api_token_cert_renew():
   except:
     return "'jwt' Token missing in Headers", 400
 
-  jwt = jwt.replace(" ", "")
-  splt = jwt.split(":")
-  fqdn = splt[0]
-  tokenStr = splt[1]
-  
   myToken = token()
-  resObj = myToken.validate_token(tokenStr, fqdn)
+  resObj = myToken.validate_token(jwt)
   if not resObj:
     return "Invalid token or FQDN", 400
-
-  try:
-    caname = resObj["caname"]
+  else:
     fqdn = resObj["fqdn"]
-  except:
-    return "Invalid payload", 400
+    caname = resObj["caname"]
 
   try:
-    myToken.load_token(caname, fqdn)
     days = myToken.renewal
   except Exception as e:
     print(e)
     days = 30
-
-  #myCa = cert_root(caname) 
-  #myCa.load_cert_from_fs()
 
   myCert = cert_websrv(caname=caname, fqdn=fqdn)
   myCert.load_cert_from_fs()
@@ -1374,12 +1362,9 @@ def api_token_cert_renew():
   myCert.write_cert_objects_to_fs()
   
   resObj["validity"] = days
-  #resObj["cert"] = myCert.crtStr
-  #resObj["fullchain"] = myCert.crtStr + myCa.crtStr
 
   #---------------------
   return jsonify(resObj), 200
-  #return resObj["fullchain"], 200
 
 #-------------------------------------------
 

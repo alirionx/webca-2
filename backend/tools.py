@@ -4,6 +4,7 @@ import hashlib, binascii
 from flask.globals import request
 import re
 from OpenSSL import crypto, SSL
+import string
 import random
 import jwt
 from datetime import datetime
@@ -59,6 +60,11 @@ class helpers:
     ranSn = random.getrandbits(bits)
     return ranSn
   
+  #----------------------------------
+  def gen_rendom_key(self, le=32):
+    res = ''.join(random.choices(string.ascii_uppercase + string.digits, k=le))
+    return res
+
   #----------------------------------
   def asn1_to_datestr(self, asn, fmt='%Y-%m-%d'):
     tmpDateStr = asn.decode()[:8]
@@ -354,6 +360,7 @@ class token:
     self.ca = None
     self.fqdn = None
     self.token = None
+    self.tokenKey = None
     self.renewal = 30
 
     if ca and fqdn: self.load_token(ca, fqdn)
@@ -410,6 +417,7 @@ class token:
         self.ca = token["ca"]
         self.fqdn = token["fqdn"]
         self.token = token["token"]
+        self.tokenKey = token["tokenKey"]
         self.renewal = token["renewal"]
         break
       else:
@@ -442,21 +450,28 @@ class token:
     if not self.ca or not self.fqdn:
       raise Exception("Please define ca and fqdn first")
 
+    myHeleprs = helpers()
+    self.tokenKey = myHeleprs.gen_rendom_key()
+
     payload = {
       "caname": self.ca,
       "fqdn": self.fqdn
     }
-    self.token = jwt.encode(payload, self.fqdn, algorithm="HS256").decode()
+    self.token = jwt.encode(payload, self.tokenKey, algorithm="HS256").decode()
 
   #----------------------------------
   def save_token(self):
-    if not self.ca or not self.fqdn or not self.token:
-      raise Exception("No token string to save... create one first.")
+
+    neededVals = ["ca", "fqdn", "token", "tokenKey"]
+    for val in neededVals:
+      if not getattr(self, val):
+        raise Exception("No token string to save... create one first.")
 
     tokenObj = {
       "fqdn": self.fqdn,
       "ca": self.ca,
       "token": self.token,
+      "tokenKey": self.tokenKey,
       "renewal": self.renewal
     }
     tokensAry = self.get_tokens_array()
@@ -467,7 +482,6 @@ class token:
       tokensAry.append(tokenObj)
     else:
       tokensAry[self.tokensArrayId] = tokenObj
-
 
     self.save_tokens_array(tokensAry)
   
@@ -481,19 +495,23 @@ class token:
     self.save_tokens_array(tokenAry)
 
   #----------------------------------
-  def validate_token(self, tokenStr, fqdn):
+  def validate_token(self, tokenStr):
     
     tokensAry = self.get_tokens_array()
     chk = False
     for tokenObj in tokensAry:
       if tokenStr == tokenObj["token"]:
+        ca = tokenObj["ca"]
+        fqdn = tokenObj["fqdn"]
         chk = True
         break
     if not chk:
       return False
 
+    self.load_token(ca, fqdn)
+
     try:
-      res = jwt.decode(tokenStr, fqdn, algorithms=["HS256"])
+      res = jwt.decode(tokenStr, self.tokenKey, algorithms=["HS256"])
       return res
     except Exception as e:
       print(e)

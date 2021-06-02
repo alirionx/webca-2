@@ -147,13 +147,13 @@ export default {
       let CertUrlStr = urlStr + certUrlPath
 
       curlRenewStr += '"' + RenewUrlStr + '" '
-      curlRenewStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
+      curlRenewStr += '--header "jwt: ' + this.data.token + '"'
 
       curlCertStr += '"' + CertUrlStr + '" '
-      curlCertStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
+      curlCertStr += '--header "jwt: ' + this.data.token + '"'
 
-      console.log(curlRenewStr)
-      console.log(curlCertStr)
+      // console.log(curlRenewStr)
+      // console.log(curlCertStr)
       this.curlRenewStr = curlRenewStr;
       this.curlCertStr = curlCertStr;
       
