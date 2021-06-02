@@ -1281,16 +1281,57 @@ def api_user_pwd_post():
 #-------------------------------------------
 
 #-The Token Section-----------------------------------------------
-@app.route('/api/token/<ca>/<fqdn>', methods=["GET"])
-@auth.login_required
-def api_token_get(ca, fqdn):
+# @app.route('/api/token/<ca>/<fqdn>', methods=["GET"])
+# @auth.login_required
+# def api_token_get(ca, fqdn):
+#   try:
+#     myToken = token(ca, fqdn)
+#     return myToken.token
+#   except Exception as e:
+#     #print(e)
+#     errStr = str(e)
+#     return errStr, 404
+  
+
+#-------------------------------------------
+@app.route('/api/token/cert', methods=["GET"])
+def api_token_cert_get():
   try:
-    myToken = token(ca, fqdn)
-    return myToken.token
+    jwt = request.headers["jwt"]
+  except:
+    return "'jwt' Token missing in Headers", 400
+
+  jwt = jwt.replace(" ", "")
+  splt = jwt.split(":")
+  fqdn = splt[0]
+  tokenStr = splt[1]
+  
+  myToken = token()
+  resObj = myToken.validate_token(tokenStr, fqdn)
+  if not resObj:
+    return "Invalid token or FQDN", 400
+
+  try:
+    caname = resObj["caname"]
+    fqdn = resObj["fqdn"]
+  except:
+    return "Invalid payload", 400
+
+  try:
+    myToken.load_token(caname, fqdn)
   except Exception as e:
-    #print(e)
-    errStr = str(e)
-    return errStr, 404
+    print(e)
+
+  myCa = cert_root(caname) 
+  myCa.load_cert_from_fs()
+
+  myCert = cert_websrv(caname=caname, fqdn=fqdn)
+  myCert.load_cert_from_fs()
+  
+  fullChain = myCert.crtStr + myCa.crtStr
+
+  #---------------------
+  return fullChain, 200
   
 
 #-------------------------------------------
@@ -1307,14 +1348,13 @@ def api_token_cert_renew():
   tokenStr = splt[1]
   
   myToken = token()
-  res = myToken.validate_token(tokenStr, fqdn)
-  if not res:
+  resObj = myToken.validate_token(tokenStr, fqdn)
+  if not resObj:
     return "Invalid token or FQDN", 400
 
-  
   try:
-    caname = res["caname"]
-    fqdn = res["fqdn"]
+    caname = resObj["caname"]
+    fqdn = resObj["fqdn"]
   except:
     return "Invalid payload", 400
 
@@ -1325,14 +1365,21 @@ def api_token_cert_renew():
     print(e)
     days = 30
 
-  res["validity"] = days
+  #myCa = cert_root(caname) 
+  #myCa.load_cert_from_fs()
 
   myCert = cert_websrv(caname=caname, fqdn=fqdn)
   myCert.load_cert_from_fs()
   myCert.renew_cert(days=days)
   myCert.write_cert_objects_to_fs()
+  
+  resObj["validity"] = days
+  #resObj["cert"] = myCert.crtStr
+  #resObj["fullchain"] = myCert.crtStr + myCa.crtStr
 
-  return str(res), 200
+  #---------------------
+  return jsonify(resObj), 200
+  #return resObj["fullchain"], 200
 
 #-------------------------------------------
 
@@ -1345,7 +1392,7 @@ def api_token_cert_renew():
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
 
-  context = ('./certs/app-scape.lab/crt/caweb.app-scape.lab.crt', './certs/app-scape.lab/key/caweb.app-scape.lab.key')
+  #context = ('./certs/app-scape.lab/crt/caweb.app-scape.lab.crt', './certs/app-scape.lab/key/caweb.app-scape.lab.key')
   # app.run(host="0.0.0.0", port=8443, ssl_context=context)
 
 #------------------------------------------------------------------

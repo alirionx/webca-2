@@ -13,11 +13,20 @@
           <!--img src="@/assets/icon_gear.svg" @click="generate_token" /-->
         </div>
 
-        <div class="iptHl">CURL Command for renewal</div>
-        <textarea class="certBox" disabled v-model="curlStr"></textarea>
+        <div class="iptHl">curl command for renewal</div>
+        <div class="curlBox">{{curlRenewStr}}
+          <img src="@/assets/icon_copy.svg" @click="copy_text(curlRenewStr)" />
+        </div>
+
+        <div class="iptHl">curl command for cert download</div>
+        <div class="curlBox">{{curlCertStr}}
+          <img src="@/assets/icon_copy.svg" @click="copy_text(curlCertStr)" />
+        </div>
+
+        <!--textarea class="certBox" disabled v-model="curlStr"></textarea>
         <div class="icoBar">
           <img src="@/assets/icon_copy.svg" @click="copy_text(curlStr)" />
-        </div>
+        </div-->
         
       </div>
 
@@ -64,7 +73,8 @@ export default {
         "6 month": 180,
         "1 year": 365
       },
-      curlStr: null
+      curlRenewStr: null,
+      curlCertStr: null
     }
   },
   methods:{
@@ -125,20 +135,29 @@ export default {
 
     generate_curl_str(){
       let renewUrlPath = "/api/token/renew";
-      let curlStr = "curl --location --request POST "
+      let certUrlPath = "/api/token/cert";
+      let curlRenewStr = "curl --location --request POST "
+      let curlCertStr = "curl "
       
       let urlStr = location.protocol + '//' + location.hostname;
       if(location.port != "80" && location.port != "443"){
         urlStr += ':' + location.port
       }
-      urlStr += renewUrlPath
+      let RenewUrlStr = urlStr + renewUrlPath
+      let CertUrlStr = urlStr + certUrlPath
 
-      curlStr += '"' + urlStr + '" '
-      curlStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
+      curlRenewStr += '"' + RenewUrlStr + '" '
+      curlRenewStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
 
-      //console.log(curlStr)
-      this.curlStr = curlStr;
-      return curlStr;
+      curlCertStr += '"' + CertUrlStr + '" '
+      curlCertStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
+
+      console.log(curlRenewStr)
+      console.log(curlCertStr)
+      this.curlRenewStr = curlRenewStr;
+      this.curlCertStr = curlCertStr;
+      
+      //return curlRenewStr;
     },
 
     copy_text(txt){ //OLD SCHOOL ;)
@@ -227,6 +246,35 @@ export default {
   cursor: pointer;
 }
 .tokenBox img:hover{
+  border-bottom: 2px solid #333;
+}
+
+.curlBox{
+  position: relative;
+  max-width: 535px;
+  min-height: 16px;
+  line-height: 16px;
+  padding: 14px;
+  margin: 2px 0 8px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 14px;
+  text-align: left;
+  word-wrap: break-word;
+  color:#000;
+  background-color: #eee;
+}
+.curlBox img{
+  position: absolute;
+  right:8px;
+  bottom:8px;
+  height: 22px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.curlBox img:hover{
   border-bottom: 2px solid #333;
 }
 </style>
