@@ -482,6 +482,16 @@ class token:
 
   #----------------------------------
   def validate_token(self, tokenStr, fqdn):
+    
+    tokensAry = self.get_tokens_array()
+    chk = False
+    for tokenObj in tokensAry:
+      if tokenStr == tokenObj["token"]:
+        chk = True
+        break
+    if not chk:
+      return False
+
     try:
       res = jwt.decode(tokenStr, fqdn, algorithms=["HS256"])
       return res
