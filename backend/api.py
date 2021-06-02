@@ -1310,6 +1310,7 @@ def api_token_cert_renew():
   res = myToken.validate_token(tokenStr, fqdn)
   if not res:
     return "Invalid token or FQDN", 400
+
   
   try:
     caname = res["caname"]
@@ -1317,9 +1318,18 @@ def api_token_cert_renew():
   except:
     return "Invalid payload", 400
 
+  try:
+    myToken.load_token(caname, fqdn)
+    days = myToken.renewal
+  except Exception as e:
+    print(e)
+    days = 30
+
+  res["validity"] = days
+
   myCert = cert_websrv(caname=caname, fqdn=fqdn)
   myCert.load_cert_from_fs()
-  myCert.renew_cert(days=30)
+  myCert.renew_cert(days=days)
   myCert.write_cert_objects_to_fs()
 
   return str(res), 200

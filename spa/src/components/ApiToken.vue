@@ -13,6 +13,11 @@
           <!--img src="@/assets/icon_gear.svg" @click="generate_token" /-->
         </div>
 
+        <div class="iptHl">CURL Command for renewal</div>
+        <textarea class="certBox" disabled v-model="curlStr"></textarea>
+        <div class="icoBar">
+          <img src="@/assets/icon_copy.svg" @click="copy_text(curlStr)" />
+        </div>
         
       </div>
 
@@ -59,6 +64,7 @@ export default {
         "6 month": 180,
         "1 year": 365
       },
+      curlStr: null
     }
   },
   methods:{
@@ -71,6 +77,7 @@ export default {
         if(this.data.renewal != undefined){
           this.renewal = this.data.renewal;
         }
+        this.generate_curl_str();
       })
       .catch((err)=> {
         // handle error
@@ -92,6 +99,7 @@ export default {
         this.data = response.data.data;
         this.$store.state.sysMsg = "New Token generated!";
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
+        this.generate_curl_str();
       })
       .catch((err)=> {
         // handle error
@@ -113,6 +121,37 @@ export default {
         this.$store.state.sysMsg = "Failed to delete token";
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
+    },
+
+    generate_curl_str(){
+      let renewUrlPath = "/api/token/renew";
+      let curlStr = "curl --location --request POST "
+      
+      let urlStr = location.protocol + '//' + location.hostname;
+      if(location.port != "80" && location.port != "443"){
+        urlStr += ':' + location.port
+      }
+      urlStr += renewUrlPath
+
+      curlStr += '"' + urlStr + '" '
+      curlStr += '--header "jwt: ' + this.crtObj.commonname + ':' + this.data.token + '"'
+
+      //console.log(curlStr)
+      this.curlStr = curlStr;
+      return curlStr;
+    },
+
+    copy_text(txt){ //OLD SCHOOL ;)
+      //console.log(txt);
+      var tmpTextBox = document.createElement("textarea");
+      document.body.appendChild(tmpTextBox);
+      //tmpTextBox.style.visibility = "hidden";
+      tmpTextBox.value = txt;
+      tmpTextBox.select();
+      document.execCommand("copy");
+      tmpTextBox.parentNode.removeChild(tmpTextBox);
+      this.$store.state.sysMsg = "content copied to clipboard" ;
+      this.$store.dispatch("trigger_reset_sys_msg", 800);
     },
 
     submit(){
@@ -183,8 +222,8 @@ export default {
 .tokenBox img{
   position: absolute;
   right:8px;
-  top:8px;
-  height: 28px;
+  top:10px;
+  height: 22px;
   cursor: pointer;
 }
 .tokenBox img:hover{
