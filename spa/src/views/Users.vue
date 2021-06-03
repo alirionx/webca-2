@@ -34,6 +34,10 @@
       v-bind:usrObj="data[setPwdShow]"
       v-bind:cb="()=>{setPwdShow = null;}" />
 
+    <CreateInvitation v-if="inviShow!=null" 
+      v-bind:usrObj="data[inviShow]"
+      v-bind:cb="()=>{inviShow = null;}" />
+
   </div>
 </template>
 
@@ -43,13 +47,15 @@ const axios = require('axios');
 import ActMenu from '@/components/ActMenu.vue'
 import EditAddUser from '@/components/EditAddUser.vue'
 import SetPwd from '@/components/SetPwd.vue'
+import CreateInvitation from '@/components/CreateInvitation.vue'
 
 export default {
   name: 'Users',
   components: {
     ActMenu,
     EditAddUser,
-    SetPwd
+    SetPwd,
+    CreateInvitation
   },
   data(){
     return{
@@ -100,7 +106,7 @@ export default {
         },
         {
           txt: "invite lnk",
-          func: (idx)=>{ console.log("invite: " + idx); }
+          func: (idx)=>{ this.inviShow = idx; }
         },
         {
           txt: "delete",
@@ -111,6 +117,7 @@ export default {
       editAddShow: null,
       domainsShow: null,
       setPwdShow: null,
+      inviShow: null,
 
     }
   },

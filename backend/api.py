@@ -1271,6 +1271,81 @@ def api_user_pwd_post():
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/user/invitation/<username>', methods=["GET"])
+def api_user_invitation_get(username):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  try:
+    myUsr = user(username)
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  resObj["data"] = {
+    "username": myUsr.username,
+    "hash": myUsr.invitationHash 
+  }
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/user/invitation', methods=["POST"])
+def api_user_invitation_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  postIn = request.json
+
+  try:
+    myUsr = user(postIn["username"])
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  myUsr.create_invitation()
+  myUsr.save_user()
+
+  resObj["data"] = {
+    "username": myUsr.username,
+    "hash": myUsr.invitationHash 
+  }
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/user/invitation/<username>', methods=["DELETE"])
+def api_user_invitation_delete(username):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  try:
+    myUsr = user(username)
+    myUsr.invitationHash = None
+    myUsr.save_user()
+  except Exception as e:
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  return jsonify(resObj), 200
 
 #-------------------------------------------
 

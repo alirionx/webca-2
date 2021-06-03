@@ -166,7 +166,7 @@ class helpers:
 #----------------------------------------------------------
 class user:
   #----------------------------------
-  valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department"]
+  valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department", "invitationHash"]
   mandaValsList = ["username", "role"]
   roles = ["admin", "caadmin", "requester"]
   #----------------------------------
@@ -176,6 +176,8 @@ class user:
     myHelpers.check_access_file()
 
     self.userListId = None
+
+    self.invitationHash = None
 
     self.username = None
     self.email = None
@@ -228,6 +230,16 @@ class user:
   
     self.passwordhash = pwdHashRes
     return pwdHashRes
+
+  #----------------------------------
+  def create_invitation(self):
+    if self.userListId == None:
+      raise Exception("no user loaded...")
+    
+    myHelpers = helpers()
+    self.invitationHash = myHelpers.gen_rendom_key(64)
+    
+    return self.invitationHash
 
   #----------------------------------
   def verify_password(self, password):

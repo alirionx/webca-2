@@ -173,35 +173,6 @@ export default {
       this.$store.dispatch("trigger_reset_sys_msg", 800);
     },
 
-    submit(){
-      
-      // axios.post('/api/user/pwd', data, ).then(response => { 
-      //   //this.loader = false;
-      //   console.log(response.data);
-      //   //this.fw();
-      //   this.cb();
-      // })
-      // .catch(error => {
-      //   //this.loader = false;
-      //   console.log(error);
-      //   this.$store.state.sysMsg = "Failed to set password for user: " + this.usrObj.username;
-      //   this.$store.dispatch("trigger_reset_sys_msg", 3000);
-      // });
-    },
-
-    copy_text(txt){ //OLD SCHOOL ;)
-      //console.log(txt);
-      var tmpTextBox = document.createElement("textarea");
-      document.body.appendChild(tmpTextBox);
-      //tmpTextBox.style.visibility = "hidden";
-      tmpTextBox.value = txt;
-      tmpTextBox.select();
-      document.execCommand("copy");
-      tmpTextBox.parentNode.removeChild(tmpTextBox);
-      this.$store.state.sysMsg = "content copied to clipboard" ;
-      this.$store.dispatch("trigger_reset_sys_msg", 800);
-    },
-
   },
   created: function(){
     this.call_token_state();
@@ -214,40 +185,6 @@ export default {
 </script>
 
 <style scoped>
-.tokenBox{
-  position: relative;
-  max-width: 535px;
-  min-height: 16px;
-  line-height: 16px;
-  padding: 14px;
-  margin: 2px 0 8px 0;
-  box-shadow: 0px 1px 2px #666;
-  border: none;
-  border-radius: 3px;
-  background-color:#fff;
-  font-size: 15px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.tokenBox .blender{
-  position:absolute;
-  right:0px;
-  top:0px;
-  width:100px;
-  height: 40px;
-  *background-color: #fff;
-  background-image: linear-gradient(to right, transparent, #fff, #fff);
-}
-.tokenBox img{
-  position: absolute;
-  right:8px;
-  top:10px;
-  height: 22px;
-  cursor: pointer;
-}
-.tokenBox img:hover{
-  border-bottom: 2px solid #333;
-}
 
 .curlBox{
   position: relative;
