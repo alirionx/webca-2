@@ -90,6 +90,16 @@ const routes = [
       roles: ["admin"]
     }
   },
+  {
+    path: '/invitation/:inviHash',
+    name: 'Invitation',
+    component: function () {
+      return import('../views/Invitation.vue')
+    },
+    meta:{
+      roles: ["admin", "caadmin", "requester"]
+    }
+  },
 
 ]
 

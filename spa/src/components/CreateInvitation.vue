@@ -13,7 +13,7 @@
       <div class="btnFrame">
         <button v-if="inviHash" @click="delete_invitation">Delete</button>
         <button v-else @click="create_invitation">Create</button>
-        <button type="button" @click="cb">Cancel</button>
+        <button type="button" @click="cb">Close</button>
       </div>
 
     </div>
@@ -101,7 +101,7 @@ export default {
         if(location.port != "80" && location.port != "443"){
           urlStr += ':' + location.port
         }
-        this.inviUrl = urlStr+"/api/invitation/"+this.inviHash; 
+        this.inviUrl = urlStr+"/#/invitation/"+this.inviHash; 
       }
     },
 
