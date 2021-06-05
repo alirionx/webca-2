@@ -1348,7 +1348,76 @@ def api_user_invitation_delete(username):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/invitation/<hash>', methods=["GET"])
+def api_invitation_get(hash):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  
+  try:
+    myUsr = user()
+    myUsr.load_user_by_invitation_hash(hash)
+    resObj["data"] = {
+      "username": myUsr.username
+    } 
+  except Exception as e:
+    print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
 
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/invitation', methods=["POST"])
+def api_invitation_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  postIn = request.json
+  
+  #---------------------
+  neededVals = ["invitationHash", "email", "newPwd" ]
+  missingVals = []
+  for val in neededVals:
+    if val not in postIn:
+       missingVals.append(val)
+
+  if len(missingVals) > 0:
+    resObj["msg"] ="Vals are missing: %s" %missingVals
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  try:
+    myUsr = user()
+    myUsr.load_user_by_invitation_hash(postIn["invitationHash"])   
+  except Exception as e:
+    print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  if postIn["email"] != myUsr.email:
+    resObj["msg"] = "invalid Email Address"
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+  else:
+    myUsr.create_passwordhash(postIn["newPwd"])
+    myUsr.invitationHash = None
+    myUsr.save_user()
+
+  #---------------------
+  return jsonify(resObj), 200
 
 #-------------------------------------------
 

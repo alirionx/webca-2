@@ -6,7 +6,7 @@
       <div class="hl">{{title}}</div>
 
       <div class="iptHl">New Password</div>
-      <input type="password" required pattern="^.{6,}$" placeholder="min 6 characters" v-model="newPwd" />
+      <input type="password" required pattern="^.{6,}$" placeholder="at least 6 characters" v-model="newPwd" />
 
       <div class="iptHl">Repeat Password</div>
       <input type="password" required pattern="^.{6,}$" placeholder="..." v-model="repPwd" />

@@ -117,7 +117,7 @@ router.beforeEach(async(to, from, next) =>{
     //console.log(store.state.role)
   }
   //if(to.name != "Login" && to.meta.roles!=undefined && !to.meta.roles.includes(store.state.role)){
-  if(to.name != "Login" && !store.state.role){
+  if(to.name != "Login" && to.name != "Invitation" && !store.state.role){
     next({ name: 'Login' })
   }
   else{

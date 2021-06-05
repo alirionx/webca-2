@@ -79,6 +79,10 @@ export default {
           func: (idx)=>{ this.renewIdx = idx; }
         },
         {
+          txt: "export",
+          func: (idx)=>{ console.log("export :"+ idx); }
+        },
+        {
           txt: "delete",
           func: (idx)=>{ this.call_delete(idx) }
         }

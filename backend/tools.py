@@ -242,6 +242,22 @@ class user:
     return self.invitationHash
 
   #----------------------------------
+  def load_user_by_invitation_hash(self, hash):
+    usersObj = self.get_users_object()
+    chk = False
+    for usrObj in usersObj:
+      if "invitationHash" in usrObj:
+        if hash == usrObj["invitationHash"]:
+          self.load_user(usrObj["username"])
+          chk = True
+          break
+
+    if not chk:
+      raise Exception("invalid invitation hash")
+    else:
+      return True
+
+  #----------------------------------
   def verify_password(self, password):
     salt = self.passwordhash[:64]
     self.passwordhash = self.passwordhash[64:]
