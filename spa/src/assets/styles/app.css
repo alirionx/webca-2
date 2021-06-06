@@ -383,3 +383,94 @@ body{
 .tokenBox img:hover{
   border-bottom: 2px solid #333;
 }
+
+.settingsCard{
+  position: relative;
+  display: table;
+  margin: 20px auto 20px auto;
+  padding:20px 20px 30px 20px;
+  min-width: 650px;
+  background-color: #fff;
+  box-shadow: 0px 4px 8px #777; 
+  text-align: left;
+}
+.settingsCard .editIcon{
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  *height:30px;
+  width:30px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.settingsCard .editIcon:hover{
+  border-bottom: 2px solid #000;
+}  
+.settingsCard .hl{
+  text-align: center;
+  font-size: 18px;
+  padding:0 0 14px 0;
+  color: #000;
+}
+.settingsCard .iptHl{
+  text-align: left;
+  padding:8px 0 2px 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.settingsCard input[type=text],input[type=email]{
+  width: 95%;
+  padding: 10px;
+  margin: 2px 0 8px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+.settingsCard input[disabled]{
+  background-color: #eee;
+}
+.settingsCard ::placeholder{
+  color: #aaa;
+}
+.settingsCard .pwdTable{
+  width: 98%;
+  margin: 30px auto 6px 0;
+  *border:1px solid #000;
+  text-align: center;
+}
+.settingsCard .pwdTable input[type=password]{
+  padding: 8px;
+  width:88%;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+  text-align: center;
+}
+
+.settingsCard .btnFrame{
+  text-align: center;
+  margin:14px auto auto auto;
+}
+.settingsCard .smlBtn{
+  display: inline-block;
+  padding:5px;
+  margin: 0px 10px 0px 10px ;
+  min-width: 140px;
+  background-color: #eee;
+  color:#000;
+  *font-weight: bold;
+  *box-shadow: 0px 1px 3px #444;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0px 1px 2px #666;
+}
+.settingsCard button:hover{
+  text-decoration: underline;
+}

@@ -189,6 +189,115 @@ def api_logout_post():
   return resObj, 200
 
 #-------------------------------------------
+@app.route('/api/settings', methods=["GET"])
+def api_settings_get():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+  #-----------------------
+  if "username" not in session or "role" not in session:
+    resObj["msg"] = "Please login first."
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
+  try:
+    myUser = user(session["username"])
+    resObj["data"]["userData"] = myUser.get_meta_data()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to load user: %s" %session["username"]
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+  #---------------------
+  return resObj, 200
+
+#-------------------------------------------
+@app.route('/api/settings/user', methods=["PUT"])
+def api_settings_user_put():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+
+  #---------------------
+  putIn = request.json
+
+  #---------------------
+  if "username" not in putIn:
+    chk = False
+  elif putIn["username"] != session["username"]:
+    chk = False
+  else:
+    myUsr = user(session["username"])
+    del putIn["username"] 
+    chk = True
+
+  if not chk:
+    resObj["msg"] = "Ivalid username"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  for val in myUsr.valList:
+    if val in putIn:
+      setattr(myUsr, val, putIn[val])
+
+  try:
+    myUsr.save_user()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+  
+  #---------------------
+  return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/settings/pwd', methods=["PUT"])
+def api_settings_pwd_put():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+
+  #---------------------
+  putIn = request.json
+
+  #---------------------
+  if "newPwd" not in putIn or "curPwd" not in putIn:
+    resObj["msg"] = "Ivalid input data"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  myUsr = user(session["username"])
+  res = myUsr.verify_password(putIn["curPwd"])
+  if not res:
+    resObj["msg"] = "current password is wrong!"
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+  else:
+    try:
+      myUsr.create_passwordhash(putIn["newPwd"])
+      myUsr.save_user()
+    except Exception as e:
+      print(e)
+      resObj["msg"] = str(e)
+      resObj["status"] = 400
+      return jsonify(resObj), 400
+      
+  #---------------------
+  return jsonify(resObj), 200
+
 
 #-------------------------------------------
 @app.route('/api/cas', methods=["GET"])
@@ -209,6 +318,7 @@ def api_cas_get():
     resObj["status"] = 500
     return jsonify(resObj), 500
 
+  #---------------------
   return jsonify(resObj), 200
 
 #-------------------------------------------
@@ -230,6 +340,7 @@ def api_ca_get(ca):
     resObj["status"] = 404
     return jsonify(resObj), 404
 
+  #---------------------
   return jsonify(resObj), 200
 
 #-------------------------------------------
