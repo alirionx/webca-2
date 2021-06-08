@@ -761,7 +761,7 @@ class cert_fs:
 
   #----------------------------------
   def import_ca(self, expPath):
-    print(expPath)
+    #print(expPath)
     tarObj = tarfile.open(expPath)
     # flList = tarObj.getmembers()
     # print(flList)
@@ -778,7 +778,9 @@ class cert_fs:
       raise Exception("ca '%s' already exists" %caname)
 
     tarObj.extractall(path=baseFolderPath)
+    tarObj.close()
     os.remove(os.path.join(baseFolderPath, "export.yaml"))
+    os.remove(expPath)
 
 #----------------------------------------------------------
 class meta_collector:
