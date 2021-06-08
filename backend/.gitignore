@@ -4,6 +4,8 @@
 *.crt
 *.csr
 *.key
+*.tar
+*.gz
 
 access.yaml
 

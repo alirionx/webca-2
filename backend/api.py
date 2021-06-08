@@ -1,5 +1,5 @@
 #-Module imports--------------------------------------------------
-from flask import Flask, request, session, redirect, jsonify 
+from flask import Flask, request, session, redirect, jsonify, send_from_directory
 from flask_cors import CORS 
 from flask_httpauth import HTTPBasicAuth
 import json
@@ -590,6 +590,31 @@ def api_ca_delete(ca):
 
   #---------------------
   return jsonify(resObj), 200
+
+#-------------------------------------------
+@app.route('/api/ca/<ca>/export', methods=["GET"])
+def api_ca_export_get(ca):
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+
+  #---------------------
+  try:
+    myCertFs = cert_fs(ca)
+  except Exception as e:
+    resObj["msg"] = "CA does not exist: '%s'" %ca
+    resObj["status"] = 404
+    return jsonify(resObj), 404
+
+
+  tgtDir, tgtFilename  = myCertFs.create_export()
+  #print(tgtDir, tgtFilename)
+  #---------------------
+  return send_from_directory(directory=tgtDir, filename=tgtFilename, as_attachment=True)
+  #return jsonify(resObj), 200
 
 #-------------------------------------------
 @app.route('/api/rootcert/<ca>', methods=["GET"])

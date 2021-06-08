@@ -8,6 +8,7 @@ import string
 import random
 import jwt
 from datetime import datetime
+import tarfile
 
 #-Tools Globals------------------------------------
 curDir = os.path.dirname(os.path.realpath(__file__)) 
@@ -63,6 +64,12 @@ class helpers:
   #----------------------------------
   def gen_rendom_key(self, le=32):
     res = ''.join(random.choices(string.ascii_uppercase + string.digits, k=le))
+    return res
+
+  #----------------------------------
+  def create_unix_timestamp(self):
+    toDay = datetime.today()
+    res = toDay.strftime('%Y-%m-%d %H:%M:%S')
     return res
 
   #----------------------------------
@@ -718,10 +725,39 @@ class cert_fs:
     return resAry
   
   #----------------------------------
-  
+  def create_export(self):
+    filename = self.caname+"_export.tar.gz"  
+    tgtPath = os.path.join(baseFolderPath, filename)
+
+    tar = tarfile.open(tgtPath, "w:gz")
+    tar.add(self.capath, arcname=self.caname)
+    
+    myHelpers = helpers()
+    expDataObj = {
+      "caname": self.caname,
+      "timestamp": myHelpers.create_unix_timestamp()
+    }
+
+    infTgtPath = os.path.join(self.capath, 'export.yaml')
+    flObj = open(infTgtPath, 'w')
+    yaml.dump(expDataObj, flObj, default_flow_style=False)
+    flObj.close()
+
+    tar.add(infTgtPath, arcname="export.yaml")
+    tar.close()
+    
+    #return tgtPath
+    return baseFolderPath, filename
   
   #----------------------------------
-
+  def clear_export(self):
+    filenames = [
+      self.caname+"_export.tar.gz",
+      "export.yaml"
+    ]
+    for filename in filenames:
+      rmPath = os.path.join(self.capath, filename)
+      os.remove(rmPath)
 
 #----------------------------------------------------------
 class meta_collector:

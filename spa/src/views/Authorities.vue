@@ -19,6 +19,7 @@
       <tr class="lastLine">
         <td :colspan="defi.length+1" >
           <button @click="()=>{addShow = true}">add</button>
+          <button @click="()=>{importShow = true}">import</button>
         </td>
       </tr>
     </table>
@@ -59,6 +60,7 @@ export default {
   data(){
     return{
       addShow: null,
+      importShow: null,
       renewIdx: null,
       certShow: null,
       acts: [
@@ -80,7 +82,7 @@ export default {
         },
         {
           txt: "export",
-          func: (idx)=>{ console.log("export :"+ idx); }
+          func: (idx)=>{ this.call_export(idx); }
         },
         {
           txt: "delete",
@@ -169,6 +171,17 @@ export default {
         this.$store.state.sysMsg = "Failed to delete ca: "+caCn;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
+    },
+
+    call_export(idx){
+      let caname = this.data[idx].commonname;
+      var tmpAElm = document.createElement('a');
+      tmpAElm.setAttribute('href', '/api/ca/'+caname+'/export');
+      tmpAElm.setAttribute('download', caname+'_export.tar.gz');
+      tmpAElm.style.display = 'none';
+      document.body.appendChild(tmpAElm);
+      tmpAElm.click();
+      document.body.removeChild(tmpAElm);
     }
 
   },
