@@ -162,6 +162,37 @@ class helpers:
     return sansList
 
   #----------------------------------
+  def chk_app_init(self):
+    try:
+      flObj = open(accessFilePath, "r")
+      objIn = yaml.safe_load(flObj)
+      objIn["users"]
+      objIn["tokens"]
+      flObj.close()
+    except Exception as e:
+      print(e)
+      return True
+
+    if len(objIn["users"]) > 0:
+      return False
+    else:
+      return True
+    
+  #----------------------------------
+  def reset_app(self, delCrts=False):
+    
+    if delCrts:
+      shutil.rmtree(baseFolderPath)
+
+    dataObj = {
+      "users": [],
+      "tokens": []
+    }
+    flObj = open(accessFilePath, "w")
+    yaml.dump(dataObj, flObj, default_flow_style=False)
+    flObj.close()
+
+  #----------------------------------
 
 #----------------------------------------------------------
 class user:

@@ -1,7 +1,7 @@
 <template>
   <div class="settings">
-    <div class="settingsCard">
-      <img src="@/assets/icon_tool.svg" class="editIcon" v-if="userEditDisabled" @click="()=>{this.userEditDisabled=false;}" />
+    <div class="settingsCard" v-bind:class="{ inactive: userEditDisabled }">
+      <img src="@/assets/icon_tool.svg" class="editIcon" v-if="userEditDisabled" @click="user_edit_switch" />
       <img src="@/assets/icon_hook.svg" class="editIcon" v-if="!userEditDisabled" @click="user_edit_submit" />
     
     <form @submit.prevent="user_edit_submit">
@@ -58,11 +58,31 @@
       
       </div>
     </form>
-
+    <div class="gradianBlender" v-if="userEditDisabled"></div>
     </div>
 
     <div class="settingsCard">
       <div class="hl">Admin Options</div>
+
+      <table class="mainTbl"><tr>
+        <td>
+          <img v-if="resetDisabled" src="@/assets/icon_power.svg" class="mainIco" @click="switch_reset" />
+          <img v-if="!resetDisabled" src="@/assets/icon_x.svg" class="mainIco" @click="switch_reset" />
+        </td>
+        <td>
+          <span v-if="resetDisabled">Reset the Application</span>
+          <div class="optSelector" v-if="!resetDisabled">
+            <label class="switch">
+              <input type="checkbox" v-model="resetCerts">
+              <span class="slider round"></span>
+            </label>
+            <span>Delete all Certificate files???</span>
+          </div>
+        </td>
+        <td v-if="!resetDisabled">
+          <img src="@/assets/icon_hook.svg" class="mainIco" @click="call_reset" />
+        </td>
+      </tr></table>
 
     </div>
 
@@ -81,6 +101,8 @@ export default {
   data(){
     return{
       userEditDisabled: true,
+      resetDisabled: true,
+      resetCerts:false,
       enablePwdChange: false,
       userData:{
         username: null,
@@ -113,6 +135,14 @@ export default {
       })
     },
 
+    user_edit_switch(){
+      if(this.userEditDisabled){
+        this.userEditDisabled=false;
+      }
+      else{
+        this.userEditDisabled=true;
+      }
+    },
     user_edit_submit(){
       // console.log(this.userData);
       // console.log(this.tmpUserData);
@@ -156,7 +186,43 @@ export default {
       this.pwdData.curPwd = null;
       this.pwdData.newPwd = null;
       this.pwdData.repPwd = null;
+    },
+
+    switch_reset(){
+      if(this.resetDisabled){
+        this.resetDisabled=false;
+      }
+      else{
+        this.resetDisabled=true;
+      }
+    },
+    call_reset(){
+      this.$store.state.sysConfirmMsg = "Do you really want to reset the application";
+      this.$store.state.sysConfirmFw = ()=>{this.do_reset()};
+    },
+    do_reset(){
+      const data = {resetCerts: this.resetCerts};
+      axios.post('/api/settings/reset', data, ).then(response => { 
+        console.log(response.data);
+        this.do_logout();
+      })
+      .catch(error => {
+        console.log(error);
+        this.$store.state.sysMsg = "Failed to reset the application: "+error.response.data.msg;;
+        this.$store.dispatch("trigger_reset_sys_msg", 3000);
+      });
+    },
+    do_logout(){
+      axios.post('/api/logout', {}, ).then(response => { 
+        console.log(response.data);
+        this.$store.commit("reset_username_role");
+        location.hash = "/login"
+      })
+      .catch(error => {
+        console.log(error);
+      });
     }
+
     
   },
   created: function(){
@@ -168,3 +234,9 @@ export default {
 
 }
 </script>
+
+<style scoped>
+.optSelector span{
+  padding-left:12px;
+}
+</style>

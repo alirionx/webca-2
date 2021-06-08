@@ -14,6 +14,13 @@ const routes = [
     }
   },
   {
+    path: '/init',
+    name: 'Init',
+    component: function () {
+      return import('../views/Init.vue')
+    }
+  },
+  {
     path: '/login',
     name: 'Login',
     component: function () {
@@ -108,6 +115,7 @@ const router = createRouter({
   routes,
 })
 
+var noRouteChk = ["Init", "Login", "Invitation"]
 router.beforeEach(async(to, from, next) =>{
   if(to.name == undefined){
     next({ name: 'Home' })
@@ -117,7 +125,7 @@ router.beforeEach(async(to, from, next) =>{
     //console.log(store.state.role)
   }
   //if(to.name != "Login" && to.meta.roles!=undefined && !to.meta.roles.includes(store.state.role)){
-  if(to.name != "Login" && to.name != "Invitation" && !store.state.role){
+  if( !noRouteChk.includes(to.name) && !store.state.role){
     next({ name: 'Login' })
   }
   else{

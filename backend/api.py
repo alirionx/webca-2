@@ -216,6 +216,30 @@ def api_settings_get():
   return resObj, 200
 
 #-------------------------------------------
+@app.route('/api/settings/init', methods=["GET"])
+def api_settings_init_get():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+  
+  #-----------------------
+  myHelpers = helpers()
+  try:
+    resObj["data"]["init"] = myHelpers.chk_app_init()
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to get init state"
+    resObj["status"] = 500
+    return jsonify(resObj), 500
+
+  #---------------------
+  return resObj, 200
+
+
+#-------------------------------------------
 @app.route('/api/settings/user', methods=["PUT"])
 def api_settings_user_put():
   resObj = {
@@ -294,10 +318,39 @@ def api_settings_pwd_put():
       resObj["msg"] = str(e)
       resObj["status"] = 400
       return jsonify(resObj), 400
-      
+
   #---------------------
   return jsonify(resObj), 200
 
+#-------------------------------------------
+@app.route('/api/settings/reset', methods=["POST"])
+def api_settings_reset_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+
+  #---------------------
+  postIn = request.json
+  delCrts = False
+  if "resetCerts" in postIn:
+    if postIn["resetCerts"]:
+      delCrts = True
+
+  #---------------------
+  myHelpers = helpers()
+  try:
+    myHelpers.reset_app(delCrts=delCrts)
+  except Exception as e:
+      print(e)
+      resObj["msg"] = str(e)
+      resObj["status"] = 500
+      return jsonify(resObj), 500
+
+  #---------------------
+  return jsonify(resObj), 200
 
 #-------------------------------------------
 @app.route('/api/cas', methods=["GET"])
@@ -1532,21 +1585,6 @@ def api_invitation_post():
 
 #-------------------------------------------
 
-
-#-------------------------------------------
-
-#-The Token Section-----------------------------------------------
-# @app.route('/api/token/<ca>/<fqdn>', methods=["GET"])
-# @auth.login_required
-# def api_token_get(ca, fqdn):
-#   try:
-#     myToken = token(ca, fqdn)
-#     return myToken.token
-#   except Exception as e:
-#     #print(e)
-#     errStr = str(e)
-#     return errStr, 404
-  
 
 #-------------------------------------------
 @app.route('/api/token/cert', methods=["GET"])
