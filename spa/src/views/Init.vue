@@ -7,15 +7,15 @@
       <div class="hl">{{title}}</div>
       
       <div class="iptHl">Username</div>
-      <input type="text" disabled v-model="data.username" />
+      <input type="text" id="usernameIpt" required v-model="data.username" placeholder="choose a username for main admin *" />
       
       <div class="iptHl">Your Email</div>
-      <input type="email" required v-model="data.email" />
+      <input type="email" required v-model="data.email" placeholder="*" />
 
-      <div class="iptHl">New Password</div>
+      <div class="iptHl">Set Password</div>
       <input type="password" required placeholder="at least 6 characters" pattern="^.{6,}$" v-model="data.newPwd" />
 
-      <div class="iptHl">Repeate new Password</div>
+      <div class="iptHl">Repeate Password</div>
       <input type="password" required v-model="data.repPwd" />
 
       <div class="btnFrame">
@@ -30,14 +30,12 @@
 </template>
 
 <script>
-import store from '../store'
 const axios = require('axios');
-//import HelloWorld from '@/components/HelloWorld.vue'
 
 export default {
   name: 'Init',
   components: {
-    //HelloWorld
+
   },
   data(){
     return{
@@ -88,7 +86,7 @@ export default {
         return
       }
       
-      axios.post('settings/init', this.data, ).then(response => { 
+      axios.post('/api/settings/init', this.data, ).then(response => { 
         //this.loader = false;
         console.log(response.data);
         this.$store.state.sysMsg = "Initialization successfull! you can now login.";
@@ -100,6 +98,7 @@ export default {
         console.log(error);
         this.$store.state.sysMsg = "Failed initialize the app: "+error.response.data.msg;
         this.$store.dispatch("trigger_reset_sys_msg", 3000);
+        this.data.username = null;
         this.data.email = null;
         this.data.newPwd = null;
         this.data.repPwd = null;
@@ -113,3 +112,10 @@ export default {
   }
 }
 </script>
+
+
+<style scoped>
+#usernameIpt{
+  text-transform: lowercase;
+}
+</style>

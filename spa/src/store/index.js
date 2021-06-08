@@ -6,6 +6,7 @@ export default createStore({
   state: {
     username: null,
     role: null,
+    init: false,
     sysMsg: null,
     sysConfirmFw: null,
     sysConfirmMsg: null,
@@ -29,10 +30,12 @@ export default createStore({
       //console.log(obj)
       state.username = obj.username;
       state.role = obj.role;
+      state.init = obj.init;
     },
     reset_username_role(state){
       state.username = null;
       state.role = null;
+      state.init = false;
     },
     reset_sys_msg(state){
       state.sysMsg = null;
@@ -49,7 +52,8 @@ export default createStore({
         //console.log(response.data);
         let obj = {
           username: response.data.username,
-          role: response.data.role
+          role: response.data.role,
+          init: response.data.init,
         }
         commit("set_username_role", obj)
       })

@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="submit">
+  <form @submit.prevent="submit" >
   <div class="stdForm">
     
     <div class="hl">WebUI Login</div>
@@ -19,6 +19,11 @@
     <div class="btnFrame">
       <button>Submit</button>
     </div>
+
+    <div id="initBtn" v-if="$store.state.init" @click="go_init">
+      inititialize App
+    </div>
+
 
   </div>
   </form>
@@ -60,6 +65,10 @@ export default {
         this.username = "";
         this.password = "";
       });
+    },
+
+    go_init(){
+      location.hash = '/init'
     }
   },
   created: function(){
@@ -71,3 +80,27 @@ export default {
 
 }
 </script>
+
+
+<style scoped>
+#initBtn{
+  position: fixed;
+  bottom: 20px;
+  right: 14px;
+  padding:5px;
+  margin: 0px 10px 0px 10px ;
+  min-width: 140px;
+  background-color: #eee;
+  color:#000;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0px 1px 2px #666;
+}
+#initBtn:hover{
+  text-decoration: underline;
+}
+</style>
+

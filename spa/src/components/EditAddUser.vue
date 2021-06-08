@@ -9,8 +9,9 @@
 
         <div class="iptHl">Username</div>
         <input type="text" required 
+          id="usernameIpt"
           :disabled="mode=='Edit'"
-          pattern="^[a-zA-Z]{4,16}" 
+          pattern="^[a-z]{4,16}" 
           placeholder="min 4 max 10 chars and no special chars" 
           v-model="data.username" />
         
@@ -134,6 +135,10 @@ export default {
 
 
 <style scoped>
+#usernameIpt{
+  text-transform: lowercase;
+}
+
 .domTable{
   margin:1px 0 6px 0;
   min-width: 550px;

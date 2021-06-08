@@ -132,9 +132,17 @@ def api_userstate_get():
     "method": request.method,
     "status": 200,
     "username": session["username"],
-    "role": session["role"]
+    "role": session["role"],
+    "init": False
   }
 
+  myHelpers = helpers()
+  try:
+    resObj["init"] = myHelpers.chk_app_init()
+  except Exception as e:
+    print(e)
+
+  #----------------------
   return resObj, 200
 
 #-------------------------------------------
@@ -238,6 +246,57 @@ def api_settings_init_get():
   #---------------------
   return resObj, 200
 
+#-------------------------------------------
+@app.route('/api/settings/init', methods=["POST"])
+def api_settings_init_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "data": {}
+  }
+  
+  #-----------------------
+  myHelpers = helpers()
+  res = myHelpers.chk_app_init()
+  if not res:
+    resObj["msg"] = "App already initialized"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  postIn = request.json
+
+  neededVals = ["username", "email", "newPwd" ]
+  missingVals = []
+  for val in neededVals:
+    if val not in postIn:
+       missingVals.append(val)
+
+  if len(missingVals) > 0:
+    resObj["msg"] ="Vals are missing: %s" %missingVals
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  myUsr = user()
+  for val in myUsr.valList:
+    if val in postIn:
+      setattr(myUsr, val, postIn[val])
+
+  myUsr.set_role("admin")
+  try:
+    myUsr.create_passwordhash(postIn["newPwd"])
+    myUsr.create_user()
+    #myUsr.save_user()
+  except Exception as e:
+    #print(e)
+    resObj["msg"] = str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  return resObj, 200
 
 #-------------------------------------------
 @app.route('/api/settings/user', methods=["PUT"])
