@@ -592,6 +592,41 @@ def api_ca_delete(ca):
   return jsonify(resObj), 200
 
 #-------------------------------------------
+@app.route('/api/ca/import', methods=["POST"])
+def api_ca_import_post():
+  resObj = {
+    "path": request.path,
+    "method": request.method,
+    "status": 200,
+    "msg": ""
+  }
+  #---------------------
+  import os 
+  try:
+    flObj = request.files['file']
+    flName = flObj.filename
+    curDir = os.path.dirname(os.path.realpath(__file__)) 
+    tgtPath = os.path.join(curDir, flName)
+    flObj.save(tgtPath)
+  except Exception as e:
+    print(e)
+    resObj["msg"] = "Failed to save posted file"
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  myCertFs = cert_fs("import")
+  try:
+    myCertFs.import_ca(tgtPath)
+  except Exception as e:
+    resObj["msg"] = "Import failed: %s" %str(e)
+    resObj["status"] = 400
+    return jsonify(resObj), 400
+
+  #---------------------
+  return jsonify(resObj), 200
+
+
+#-------------------------------------------
 @app.route('/api/ca/<ca>/export', methods=["GET"])
 def api_ca_export_get(ca):
   resObj = {

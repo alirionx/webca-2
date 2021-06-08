@@ -37,6 +37,10 @@
       v-bind:caname="certShow" 
       v-bind:cb="()=>{certShow = null}" />
 
+    <CaImport v-if="importShow"
+      v-bind:fw="()=>{ call_authorities(); }" 
+      v-bind:cb="()=>{importShow = null}" />
+
   </div>
 </template>
 
@@ -48,6 +52,7 @@ import ActMenu from '@/components/ActMenu.vue'
 import CaAdd from '@/components/CaAdd.vue'
 import CaRenew from '@/components/CaRenew.vue'
 import RootCertShow from '@/components/RootCertShow.vue'
+import CaImport from '@/components/CaImport.vue'
 
 export default {
   name: 'Authorities',
@@ -55,7 +60,8 @@ export default {
     ActMenu,
     CaAdd,
     CaRenew,
-    RootCertShow
+    RootCertShow,
+    CaImport
   },
   data(){
     return{

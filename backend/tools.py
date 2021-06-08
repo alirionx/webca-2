@@ -759,6 +759,27 @@ class cert_fs:
       rmPath = os.path.join(self.capath, filename)
       os.remove(rmPath)
 
+  #----------------------------------
+  def import_ca(self, expPath):
+    print(expPath)
+    tarObj = tarfile.open(expPath)
+    # flList = tarObj.getmembers()
+    # print(flList)
+    infFile = tarObj.getmember("export.yaml")
+    flObj = tarObj.extractfile(infFile)
+    objIn = yaml.safe_load(flObj)
+
+    if "caname" not in objIn or "timestamp" not in objIn:
+      raise Exception("invalid ca export file")
+    else:
+      caname = objIn["caname"]
+    
+    if os.path.isdir(os.path.join(baseFolderPath, caname)):
+      raise Exception("ca '%s' already exists" %caname)
+
+    tarObj.extractall(path=baseFolderPath)
+    os.remove(os.path.join(baseFolderPath, "export.yaml"))
+
 #----------------------------------------------------------
 class meta_collector:
 
