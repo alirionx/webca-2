@@ -33,6 +33,14 @@ roleAccessMap = {
     "methods": ["GET"],
     "roles": ["admin", "caadmin", "requester"]
   },
+  "^\/api\/settings\/user": { 
+    "methods": ["PUT"],
+    "roles": ["admin", "caadmin", "requester"]
+  },
+  "^\/api\/settings\/pwd": { 
+    "methods": ["PUT"],
+    "roles": ["admin", "caadmin", "requester"]
+  },
 
 }
 
