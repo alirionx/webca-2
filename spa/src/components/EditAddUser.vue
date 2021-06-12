@@ -95,8 +95,15 @@ export default {
   },
   methods:{
     submit(){
-     
-      console.log(this.data);
+
+      //nicht wirklich schön
+      if(this.data.role == "admin"){
+        for(let dom in this.data.domains){
+          this.data.domains[dom] = true;
+        }
+      }
+
+      //console.log(this.data);
       
       this.method('/api/user', this.data, ).then(response => { 
         //this.loader = false;
@@ -122,8 +129,14 @@ export default {
           this.data[prop] = JSON.parse(JSON.stringify(this.dataIn[prop]));
         }
       }
-     
-    }    
+    }
+    
+    for(let idx in this.domains){
+      let dom = this.domains[idx];
+      if(this.data.domains[dom] == undefined){
+        this.data.domains[dom] = false;
+      }
+    }
 
   },
   mounted: function(){

@@ -126,4 +126,7 @@ from tools import helpers, user, token, cert_fs, meta_collector, cert_root, cert
 
 myHelpers = helpers()
 # myHelpers.chk_san_validity("dns", "mycert.com")
-myHelpers.chk_san_validity("ip", "192.168.10.1233")
+#myHelpers.chk_san_validity("ip", "192.168.10.1233")
+
+res = myHelpers.update_domain_access()
+print(json.dumps(res, indent=2))

@@ -15,12 +15,25 @@ sessVars = ["username", "role"]
 roleAccessMap = {
   "^\/api\/cas": { 
     "methods": ["GET", "POST", "PUT", "DELETE"],
+    "roles": ["admin", "caadmin"]
+  },
+  "^\/api\/ca": { 
+    "methods": ["POST"],
     "roles": ["admin"]
   },
   "^\/api\/ca\/.*": { 
-    "methods": ["GET", "POST", "PUT", "DELETE"],
-    "roles": ["admin", "caadmin"]
+    "methods": ["GET", "PUT", "DELETE"],
+    "roles": ["admin"]
   },
+  "^\/api\/settings\/reset": { 
+    "methods": ["POST"],
+    "roles": ["admin"]
+  },
+  "^\/api\/settings\/.*": { 
+    "methods": ["GET"],
+    "roles": ["admin", "caadmin", "requester"]
+  },
+
 }
 
 caFuncMap = {
@@ -55,10 +68,10 @@ auth = HTTPBasicAuth()
 @app.before_first_request
 def before_everything():
   inf = "Do something here???"
-  # session["username"] = None
-  # session["role"] = None
-  session["username"] = "dquilitzsch"
-  session["role"] = "admin"
+  session["username"] = None
+  session["role"] = None
+  # session["username"] = "dquilitzsch"
+  # session["role"] = "admin"
 
   myHelpers = helpers()
   myHelpers.chk_base_folder()
@@ -422,14 +435,25 @@ def api_cas_get():
   }
 
   myMetaColl = meta_collector()
+  caList = myMetaColl.collect_certificate_authorities()
+  
+  #-The Security Part... HEAVY
+  myUser = user(session["username"])
+  usrDomObj = myUser.domains
+  domResObj = []
   try:
-    resObj["data"] = myMetaColl.collect_certificate_authorities() 
+    for ca in caList:
+      caname = ca["commonname"]
+      if caname in list(usrDomObj.keys()):
+        if usrDomObj[caname]:
+          domResObj.append(ca)
   except Exception as e:
     print(e)
-    resObj["msg"] = " something went wrong: %s" %e
+    resObj["msg"] = " something went wrong: %s" %str(e)
     resObj["status"] = 500
     return jsonify(resObj), 500
 
+  resObj["data"] = domResObj
   #---------------------
   return jsonify(resObj), 200
 
@@ -505,6 +529,10 @@ def api_ca_post():
     resObj["msg"] = "Failed to create new ca: %s" %e
     resObj["status"] = 500
     return jsonify(resObj), 500
+
+  #-----------------------
+  myHelpers = helpers()
+  myHelpers.update_domain_access()
 
   #-----------------------
   return jsonify(resObj), 200
@@ -588,6 +616,9 @@ def api_ca_delete(ca):
   myCertFs = cert_fs(ca)
   myCertFs.delete_root_all()
 
+  #-----------------------
+  myHelpers = helpers()
+  myHelpers.update_domain_access()
   #---------------------
   return jsonify(resObj), 200
 

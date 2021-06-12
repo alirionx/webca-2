@@ -169,6 +169,36 @@ class helpers:
     return sansList
 
   #----------------------------------
+  def update_domain_access(self):
+    myUser = user()
+    usersObj = myUser.get_users_object()
+    
+    myMetaColl = meta_collector()
+    domList = myMetaColl.list_cas()
+
+    i=0
+    for usrObj in usersObj:
+      domObj = {}
+
+      if usrObj["role"] == "admin":
+        for dom in domList:
+          domObj[dom] = True
+      else:
+        for dom in domList:
+          try: 
+            domObj[dom] = usrObj["domains"][dom]
+          except:
+            domObj[dom] = False
+          
+      usersObj[i]["domains"] = domObj
+      i+=1
+
+    myUser.write_user_object(usersObj)
+    return usersObj
+
+
+
+  #----------------------------------
   def chk_app_init(self):
     try:
       flObj = open(accessFilePath, "r")
@@ -357,6 +387,9 @@ class user:
     usersObj.append(newUsrObj)
     #print(usersObj)
     self.write_user_object(usersObj)
+
+    #myHelpers = helpers()
+    #myHelpers.update_domain_access()
 
   #----------------------------------
   def save_user(self):
@@ -801,7 +834,7 @@ class meta_collector:
     return caAry
 
   #----------------------------------
-  def collect_certificate_authorities(self): # Ein Traum in Code!!!!
+  def collect_certificate_authorities(self ): # Ein Traum in Code!!!!
     
     resObj = []
     caAry = self.list_cas()
@@ -819,6 +852,7 @@ class meta_collector:
 
       resObj.append(tmpObj)
 
+    #--------------------------
     return resObj
 
   #----------------------------------

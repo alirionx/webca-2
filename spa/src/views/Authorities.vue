@@ -16,7 +16,7 @@
             @click="()=>{this.activeMenu = idx}" />
         </td>
       </tr>
-      <tr class="lastLine">
+      <tr class="lastLine" v-if="$store.state.role=='admin'">
         <td :colspan="defi.length+1" >
           <button @click="()=>{addShow = true}">add</button>
           <button @click="()=>{importShow = true}">import</button>
@@ -174,7 +174,7 @@ export default {
       .catch((err)=> {
         // handle error
         console.log(err.response);
-        this.$store.state.sysMsg = "Failed to delete ca: "+caCn;
+        this.$store.state.sysMsg = "Failed to delete ca: "+caCn+' ('+err.response.status+')' ;
         this.$store.dispatch("trigger_reset_sys_msg", 2000);
       })
     },
