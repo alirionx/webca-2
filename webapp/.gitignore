@@ -1,4 +1,6 @@
 
+dist/
+static/
 certs/*
 
 *.db

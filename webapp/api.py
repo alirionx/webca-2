@@ -206,8 +206,9 @@ def base_auth_login(username, password):
 #-The APP Request Handler Area-------------------------------------
 @app.route('/', methods=["GET"])
 def html_home_get():
-  return 'Hello from the App root'
-
+  #return 'Hello from the App root'
+  return app.send_static_file("index.html")
+  
 #------------------------------------------------------------------
 @app.route('/api', methods=["GET"])
 def api_root_get():
