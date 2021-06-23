@@ -182,7 +182,7 @@ export default {
     call_export(idx){
       let caname = this.data[idx].commonname;
       var tmpAElm = document.createElement('a');
-      tmpAElm.setAttribute('href', '/api/ca/'+caname+'/export');
+      tmpAElm.setAttribute('href', '/api/ca/export/'+caname);
       tmpAElm.setAttribute('download', caname+'_export.tar.gz');
       tmpAElm.style.display = 'none';
       document.body.appendChild(tmpAElm);

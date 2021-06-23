@@ -12,37 +12,72 @@ from tools import cert_fs, meta_collector, cert_root, cert_websrv, token, user, 
 #-API Globals and contructors-------------------------------------
 sessVars = ["username", "role"]
 
-roleAccessMap = {
-  "^\/api\/cas": { 
-    "methods": ["GET", "POST", "PUT", "DELETE"],
+roleAccessMap = [
+  #--------------------------
+  {
+    "path": "^\/api\/cas", 
+    "methods": ["GET"],
+    "roles": ["admin", "caadmin" ]
+  },
+  {
+    "path": "^\/api\/cas", 
+    "methods": ["POST", "PUT", "DELETE"],
+    "roles": ["admin", "caadmin" ]
+  },
+  #--------------------------
+  {
+    "path": "^\/api\/ca",
+    "methods": ["POST"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/ca\/import",
+    "methods": ["POST"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/ca\/export/.*",
+    "methods": ["GET"],
     "roles": ["admin", "caadmin"]
   },
-  "^\/api\/ca": { 
-    "methods": ["POST"],
+  {
+    "path": "^\/api\/ca\/.*", 
+    "methods": [ "PUT", "GET"],
+    "roles": ["admin", "caadmin"]
+  },
+  {
+    "path": "^\/api\/ca\/.*", 
+    "methods": ["POST", "DELETE"],
     "roles": ["admin"]
   },
-  "^\/api\/ca\/.*": { 
-    "methods": ["GET", "PUT", "DELETE"],
-    "roles": ["admin"]
-  },
-  "^\/api\/settings\/reset": { 
-    "methods": ["POST"],
-    "roles": ["admin"]
-  },
-  "^\/api\/settings\/.*": { 
+  #--------------------------
+  {
+    "path": "^\/api\/rootcert\/.*", 
     "methods": ["GET"],
-    "roles": ["admin", "caadmin", "requester"]
+    "roles": ["admin", "caadmin"]
   },
-  "^\/api\/settings\/user": { 
+  #--------------------------
+  {
+    "path": "^\/api\/settings\/reset", 
+    "methods": ["POST"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/settings\/.*", 
+    "methods": ["GET"],
+    "roles": ["admin", "caadmin" ]
+  },
+  {
+    "path": "^\/api\/settings\/user", 
     "methods": ["PUT"],
-    "roles": ["admin", "caadmin", "requester"]
+    "roles": ["admin", "caadmin" ]
   },
-  "^\/api\/settings\/pwd": { 
+  {
+    "path": "^\/api\/settings\/pwd", 
     "methods": ["PUT"],
-    "roles": ["admin", "caadmin", "requester"]
+    "roles": ["admin", "caadmin" ]
   },
-
-}
+]
 
 caFuncMap = {
   "commonname": "set_common_name",
@@ -76,8 +111,8 @@ auth = HTTPBasicAuth()
 @app.before_first_request
 def before_everything():
   inf = "Do something here???"
-  session["username"] = None
-  session["role"] = None
+  # session["username"] = None
+  # session["role"] = None
   # session["username"] = "dquilitzsch"
   # session["role"] = "admin"
 
@@ -94,9 +129,9 @@ def check_before_every_request():
     if var not in session:
       session[var] = None
 
-  for reStr, paras in roleAccessMap.items():
-    reChk = re.search(reStr, request.path)
-    if reChk and request.method in paras["methods"] and session["role"] not in paras["roles"]:
+  for roleAccess in roleAccessMap:
+    reChk = re.search(roleAccess["path"], request.path)
+    if reChk and request.method in roleAccess["methods"] and session["role"] not in roleAccess["roles"]:
       resObj = {
         "path": request.path,
         "method": request.method,
@@ -104,6 +139,9 @@ def check_before_every_request():
         "msg": "Access Denied"
       }
       return jsonify(resObj), 401
+    
+    elif reChk and request.method in roleAccess["methods"]:
+      break
 
 #--------------------------------
 @auth.verify_password
@@ -485,6 +523,14 @@ def api_ca_get(ca):
     return jsonify(resObj), 404
 
   #---------------------
+  myUser = user(session["username"])
+  chk = myUser.ca_admin_access_chk()
+  if not chk:
+    resObj["msg"] = "Access on ca: '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
+  #---------------------
   return jsonify(resObj), 200
 
 #-------------------------------------------
@@ -666,7 +712,7 @@ def api_ca_import_post():
 
 
 #-------------------------------------------
-@app.route('/api/ca/<ca>/export', methods=["GET"])
+@app.route('/api/ca/export/<ca>', methods=["GET"])
 def api_ca_export_get(ca):
   resObj = {
     "path": request.path,
@@ -737,7 +783,7 @@ def api_certs_get(ca):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
-
+  
   #---------------------
   resObj["data"] = myMetaColl.collect_certificates(ca)
   try:

@@ -23,7 +23,7 @@ export default createStore({
       "TW","TZ","UA","UG","UM","US","UY","UZ","VA","VC","VE","VG","VI","VN","VU","WF","WS","YE","YT","ZA","ZM","ZW"
     ],
 
-    roles: ["admin", "caadmin", "requester"]
+    roles: ["admin", "caadmin" ]
   },
   mutations: {
     set_username_role(state, obj){

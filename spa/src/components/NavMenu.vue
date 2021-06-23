@@ -57,7 +57,7 @@ export default {
         {
           txt: "Settings",
           lnk: "/settings",
-          roles: ["admin"],
+          roles: ["admin", "caadmin", "requester" ],
           func: ()=>{ this.goto("/settings") },
         },
         {

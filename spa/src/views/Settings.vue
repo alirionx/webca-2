@@ -23,15 +23,15 @@
     </form>
       
     <form  @submit.prevent="pwd_change_submit">
-      <table class="pwdTable" v-if="!userEditDisabled&&enablePwdChange"><tr>
+      <table class="pwdTable" v-if="!userEditDisabled&&enablePwdChange" border="0"><tr>
         <td>
           <input type="password" required pattern="^.{6,}$" placeholder="current password" v-model="pwdData.curPwd" />
         </td>
+        <td>
           <input type="password" required pattern="^.{6,}$" placeholder="new password" v-model="pwdData.newPwd" />
-        <td>
         </td>
-          <input type="password" required pattern="^.{6,}$" placeholder="repeate new password" v-model="pwdData.repPwd" />
         <td>
+          <input type="password" required pattern="^.{6,}$" placeholder="repeate new password" v-model="pwdData.repPwd" />
         </td>
       </tr></table>
 
@@ -46,14 +46,14 @@
           class="smlBtn"
           type="button"
           v-if="!userEditDisabled&&!enablePwdChange"  
-          @click="()=>{this.enablePwdChange=true;}"
+          @click="()=>{enablePwdChange=true;}"
         >change password</button>
 
         <button 
           class="smlBtn"
           type="button"
           v-if="!userEditDisabled&&enablePwdChange"  
-          @click="()=>{this.enablePwdChange=false;}"
+          @click="()=>{enablePwdChange=false;}"
         >cancel</button>
       
       </div>
@@ -61,7 +61,7 @@
     <div class="gradianBlender" v-if="userEditDisabled"></div>
     </div>
 
-    <div class="settingsCard">
+    <div class="settingsCard" v-if="$store.state.role=='admin'">
       <div class="hl">Admin Options</div>
 
       <table class="mainTbl"><tr>

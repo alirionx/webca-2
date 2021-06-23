@@ -442,6 +442,9 @@ body{
   *border:1px solid #000;
   text-align: center;
 }
+.settingsCard .pwdTable td{
+  width:30%;
+}
 .settingsCard .pwdTable input[type=password]{
   padding: 8px;
   width:88%;

@@ -18,7 +18,7 @@
         <div class="iptHl">Email Address</div>
         <input type="email" required v-model="data.email" />
 
-        <div class="iptHl">Country</div>
+        <div class="iptHl">Role</div>
         <select required v-model="data.role" >
           <option v-for="(val, idx) in $store.state.roles" :key="idx" :value="val">{{val}}</option>
         </select>
@@ -84,7 +84,7 @@ export default {
       data: {
         username: "",
         email: "",
-        role: "requester",
+        role: "caadmin",
         firstname: "",
         lastname: "",
         department: "",

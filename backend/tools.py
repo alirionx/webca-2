@@ -236,7 +236,7 @@ class user:
   #----------------------------------
   valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department", "invitationHash"]
   mandaValsList = ["username", "role"]
-  roles = ["admin", "caadmin", "requester"]
+  roles = ["admin", "caadmin"]
   #----------------------------------
   def __init__(self, username=None):
     inf = "new user object created"
@@ -441,7 +441,24 @@ class user:
 
     return usrObj
 
+
   #----------------------------------
+  def chk_ca_admin_access(self, caname): #Übler DAU-CODE
+
+    if self.userListId == None:
+      raise Exception("no user loaded...")
+
+    if self.role == 'admin':
+      return True
+
+    #print(self.domains)
+
+    if caname not in self.domains:
+      return False
+    elif self.domains[caname]:
+      return True
+    else:
+      return False
 
   #----------------------------------
 

@@ -10,7 +10,7 @@ const routes = [
     name: 'Home',
     component: Home,
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin" ]
     }
   },
   {
@@ -44,7 +44,7 @@ const routes = [
       return import('../views/Requests.vue')
     },
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin"]
     }
   },
   {
@@ -54,7 +54,7 @@ const routes = [
       return import('../views/Requests.vue')
     },
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin"]
     }
   },
   {
@@ -64,7 +64,7 @@ const routes = [
       return import('../views/Certificates.vue')
     },
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin" ]
     }
   },
   {
@@ -74,7 +74,7 @@ const routes = [
       return import('../views/Certificates.vue')
     },
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin" ]
     }
   },
   {
@@ -104,7 +104,7 @@ const routes = [
       return import('../views/Invitation.vue')
     },
     meta:{
-      roles: ["admin", "caadmin", "requester"]
+      roles: ["admin", "caadmin" ]
     }
   },
 
