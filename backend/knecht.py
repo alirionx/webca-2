@@ -114,7 +114,7 @@ from tools import helpers, user, token, cert_fs, meta_collector, cert_root, cert
 # myToken = token("app-scape.lab", "www.app-scape.lab")
 # myToken.delete_token()
 
-# tokenStr = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjYSI6ImFwcC1zY2FwZS5sYWIiLCJmcWRuIjoic210cC5hcHAtc2NhcGUubGFiIn0.G2ICMitYSP0aSVjKyg-4vTttYMGUBhzE051EBkFu_SI"
+# tokenStr = "sdfvsfvsfvsfvsfvsfv"
 # myToken.validate_token(tokenStr, "smtp.app-scape.lab")
 
 
