@@ -1,4 +1,6 @@
 
+certs/
+
 *.db
 *.pem
 *.crt
