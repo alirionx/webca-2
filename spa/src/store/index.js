@@ -47,7 +47,7 @@ export default createStore({
   },
   actions: {
     check_user_state({ commit }){
-      return axios.get('/api/userstate')
+      return axios.get('/api/usrstate')
       .then((response)=> {
         //console.log(response.data);
         let obj = {

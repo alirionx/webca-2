@@ -14,6 +14,8 @@ sessVars = ["username", "role"]
 
 roleAccessMap = [
   #--------------------------
+  
+  #--------------------------
   {
     "path": "^\/api\/cas", 
     "methods": ["GET"],
@@ -52,6 +54,13 @@ roleAccessMap = [
   },
   #--------------------------
   {
+    "path": "^\/api\/certs\/.*", 
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "roles": ["admin", "caadmin"]
+  },
+
+  #--------------------------
+  {
     "path": "^\/api\/rootcert\/.*", 
     "methods": ["GET"],
     "roles": ["admin", "caadmin"]
@@ -77,6 +86,33 @@ roleAccessMap = [
     "methods": ["PUT"],
     "roles": ["admin", "caadmin" ]
   },
+  #--------------------------
+  {
+    "path": "^\/api\/users", 
+    "methods": ["GET"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/user\/invitation", 
+    "methods": ["GET", "POST", "PUT", "DELETE"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/user", 
+    "methods": ["POST", "PUT"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/user\/pwd", 
+    "methods": ["POST"],
+    "roles": ["admin"]
+  },
+  {
+    "path": "^\/api\/user\/.*", 
+    "methods": ["DELETE"],
+    "roles": ["admin"]
+  },
+
 ]
 
 caFuncMap = {
@@ -111,8 +147,8 @@ auth = HTTPBasicAuth()
 @app.before_first_request
 def before_everything():
   inf = "Do something here???"
-  # session["username"] = None
-  # session["role"] = None
+  session["username"] = None
+  session["role"] = None
   # session["username"] = "dquilitzsch"
   # session["role"] = "admin"
 
@@ -184,7 +220,7 @@ def api_root_get():
   return jsonify(testObj), 200
 
 #-------------------------------------------
-@app.route('/api/userstate', methods=["GET"])
+@app.route('/api/usrstate', methods=["GET"])
 def api_userstate_get():
   resObj = {
     "path": request.path,
@@ -608,7 +644,7 @@ def api_ca_put(ca):
     del putIn["organization"]
   except:
     inf = "U R so fuggin LAZY"
-  
+
   #-----------------------
   try:
     myRootCert = cert_root(ca)
@@ -618,6 +654,14 @@ def api_ca_put(ca):
     resObj["msg"] = " Failed to load ca: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #-----------------------
   for key, funcStr in caFuncMap.items():
@@ -753,6 +797,14 @@ def api_rootcert_get(ca):
     resObj["status"] = 404
     return jsonify(resObj), 404
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+    
   #---------------------
   myRootCert = cert_root(ca)
   myRootCert.load_cert_from_fs()
@@ -784,6 +836,14 @@ def api_certs_get(ca):
     resObj["status"] = 404
     return jsonify(resObj), 404
   
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
   #---------------------
   resObj["data"] = myMetaColl.collect_certificates(ca)
   try:
@@ -814,6 +874,14 @@ def api_cert_get(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertsFs = cert_fs(ca)
@@ -857,6 +925,14 @@ def api_crtpem_get(ca, fqdn):
     resObj["status"] = 404
     return jsonify(resObj), 404
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
   #---------------------
   try:
     myCrt = cert_websrv(ca, fqdn)
@@ -895,6 +971,14 @@ def api_cert_token_generate_post():
     resObj["msg"] = "JSON Input is missing! Please try again..."
     resObj["status"] = 400
     return jsonify(resObj), 400
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(caname)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %caname
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   try:
@@ -943,6 +1027,14 @@ def api_cert_token_get(ca, fqdn):
     "msg": "",
   }
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
   #---------------------
   try:
     myToken = token()
@@ -968,6 +1060,14 @@ def api_cert_token_delete(ca, fqdn):
     "status": 200,
     "msg": "",
   }
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   try:
@@ -997,6 +1097,14 @@ def api_cert_post(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertFs = cert_fs(ca)
@@ -1039,6 +1147,14 @@ def api_cert_put(ca, fqdn):
     "status": 200,
     "msg": []
   }
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   try:
@@ -1099,7 +1215,6 @@ def api_cert_put(ca, fqdn):
   return jsonify(resObj), 200
 
 
-
 #-------------------------------------------
 @app.route('/api/cert/<ca>/<fqdn>', methods=["DELETE"])
 def api_cert_delete(ca, fqdn):
@@ -1117,6 +1232,14 @@ def api_cert_delete(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertFs = cert_fs(ca)
@@ -1149,6 +1272,14 @@ def api_reqs_get(ca):
     resObj["status"] = 404
     return jsonify(resObj), 404
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
   #---------------------
   try:
     resObj["data"] = myMetaColl.collect_requests(ca)
@@ -1178,6 +1309,14 @@ def api_req_get(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertsFs = cert_fs(ca)
@@ -1217,6 +1356,14 @@ def api_reqpem_get(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertsFs = cert_fs(ca)
@@ -1269,6 +1416,14 @@ def api_req_post(ca):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertFs = cert_fs(ca)
@@ -1334,6 +1489,14 @@ def api_req_put(ca, fqdn):
     "msg": []
   }
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+  
   #---------------------
   try:
     myReq = cert_websrv(ca, fqdn)
@@ -1418,6 +1581,14 @@ def api_req_upload_post(ca):
     resObj["status"] = 404
     return jsonify(resObj), 404
 
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
+
   #---------------------
   myHelpers = helpers()
   try:
@@ -1463,6 +1634,14 @@ def api_req_delete(ca, fqdn):
     resObj["msg"] = "CA does not exist: '%s'" %ca
     resObj["status"] = 404
     return jsonify(resObj), 404
+
+  #-----------------------
+  myUser = user(session["username"])
+  chk = myUser.chk_ca_admin_access(ca)
+  if not chk:
+    resObj["msg"] = "Access to ca '%s' not allowed" %ca
+    resObj["status"] = 401
+    return jsonify(resObj), 401
 
   #---------------------
   myCertFs = cert_fs(ca)

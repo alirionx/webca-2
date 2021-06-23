@@ -448,11 +448,6 @@ class user:
     if self.userListId == None:
       raise Exception("no user loaded...")
 
-    if self.role == 'admin':
-      return True
-
-    #print(self.domains)
-
     if caname not in self.domains:
       return False
     elif self.domains[caname]:
