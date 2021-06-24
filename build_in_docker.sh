@@ -22,6 +22,8 @@ docker exec -it -w /data $CONNAME npm run build
 
 docker cp $CONNAME:/data/dist ./webapp/
 
+docker kill $CONNAME
+docker rm $CONNAME
 
 
 
