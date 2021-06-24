@@ -2,6 +2,6 @@ flask
 flask_cors
 Flask-HTTPAuth
 pyOpenSsl
-pysqlite3
+#pysqlite3
 jwt
 
