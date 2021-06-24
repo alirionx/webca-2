@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_httpauth import HTTPBasicAuth
 import json
 import re
+import os
 
 #-Custom Modules and mappers-------
 from tools import cert_fs, meta_collector, cert_root, cert_websrv, token, user, helpers
@@ -730,8 +731,7 @@ def api_ca_import_post():
     "status": 200,
     "msg": ""
   }
-  #---------------------
-  import os 
+  #--------------------- 
   try:
     flObj = request.files['file']
     flName = flObj.filename
@@ -776,9 +776,10 @@ def api_ca_export_get(ca):
 
 
   tgtDir, tgtFilename  = myCertFs.create_export()
+  tgtPath = os.path.join(tgtDir, tgtFilename)
   #print(tgtDir, tgtFilename)
   #---------------------
-  return send_from_directory(directory=tgtDir, filename=tgtFilename, as_attachment=True)
+  return send_from_directory(directory=tgtDir, filename=tgtFilename, path=tgtPath, as_attachment=True)
   #return jsonify(resObj), 200
 
 #-------------------------------------------
