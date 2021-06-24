@@ -1,3 +1,4 @@
+PyYaml
 flask
 flask_cors
 Flask-HTTPAuth
