@@ -71,11 +71,11 @@ roleAccessMap = [
     "methods": ["POST"],
     "roles": ["admin"]
   },
-  {
-    "path": "^\/api\/settings\/.*", 
-    "methods": ["GET"],
-    "roles": ["admin", "caadmin" ]
-  },
+  # {
+  #   "path": "^\/api\/settings\/.*", 
+  #   "methods": ["GET"],
+  #   "roles": ["admin", "caadmin" ]
+  # },
   {
     "path": "^\/api\/settings\/user", 
     "methods": ["PUT"],
