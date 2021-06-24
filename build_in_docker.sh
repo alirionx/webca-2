@@ -13,7 +13,7 @@ docker exec -it $CONNAME apt update
 docker exec -it $CONNAME apt install -y curl
 docker exec -it $CONNAME curl -sL $NODESRC -o /tmp/nodesource_setup.sh
 docker exec -it $CONNAME /tmp/nodesource_setup.sh
-docker exec -it $CONNAME apt install nodejs
+docker exec -it $CONNAME apt install -y nodejs
 docker exec -it $CONNAME node --version
 
 docker exec -it -w /data $CONNAME npm install
