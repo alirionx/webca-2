@@ -7,9 +7,10 @@ NODESRC=https://deb.nodesource.com/setup_16.x
 TMPPATH="/home/$USER/tmp/$TS"
 
 #---------------------------
-mkdir -p $TMPPATH
-cp -R ./webapp/*.py $TMPPATH
-cp -R ./webapp/settings.yaml $TMPPATH
+mkdir -p $TMPPATH/webca
+cp -R ./webapp/*.py $TMPPATH/webca
+cp -R ./webapp/settings.yaml $TMPPATH/webca
+cp -R ./webapp/requirements.txt $TMPPATH/webca
 
 
 #---------------------------
@@ -27,13 +28,14 @@ docker exec -it $CONNAME node --version
 docker exec -it -w /data $CONNAME npm install
 docker exec -it -w /data $CONNAME npm run build
 
-docker cp $CONNAME:/data/dist $TMPPATH/
+docker cp $CONNAME:/data/dist $TMPPATH/webca/
 
 docker kill $CONNAME
 docker rm $CONNAME
 
 #---------------------------
-tar -czf ./webca.tar.gz $TMPPATH
+tar -czf ./webca.tar.gz -C $TMPPATH .
+rm -R $TMPPATH
 
 #---------------------------
 
