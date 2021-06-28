@@ -1,0 +1,8 @@
+PyYaml
+flask
+flask_cors
+Flask-HTTPAuth
+pyOpenSsl
+#pysqlite3
+jwt
+

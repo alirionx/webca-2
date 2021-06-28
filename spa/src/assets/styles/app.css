@@ -1,0 +1,571 @@
+body{
+  background-image: linear-gradient(#f6f6f6 100%, #fff 100%);
+  background-repeat: no-repeat;
+  background-color: #f6f6f6;
+  *font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  padding: 120px 8px 8px 8px;
+  min-height:80vh;
+  min-width: 800px;
+}
+.headBlock{
+  position: fixed;
+  left:0px;
+  top: 0px;
+  height:100px;
+  width: 100%;
+  background-color: #000;
+  padding:4px;
+  text-align: center;
+  color:#fff;
+}
+.headBlock .headLine{
+  font-size: 22px;
+  text-align: left;
+  color: #fff;
+  line-height: 90px;
+  padding-left:4%;
+  white-space: nowrap;
+}
+
+.blocker{
+  position: fixed;
+  left:0;
+  top:0;
+  width: 100%;
+  height: 100vh;
+  padding-top:30px;
+  background-color: rgba(255,255,255,0.85);
+}
+
+.mainSelect{
+  display: table;
+  min-width: 280px;
+  margin: 20px auto 28px auto;
+  padding:10px;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+
+.stdForm{
+  display: inline-block;
+  margin: 6vh auto auto auto;
+  min-width:570px;
+  min-height:100px;
+  text-align:left;
+  padding:24px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  box-shadow: 0px 8px 14px #555;
+  background-color:#f6f6f6;
+  text-align: center;
+  
+}
+.stdForm .innerBox{
+  max-height: 65vh;
+  overflow: auto;
+  padding-right: 6px;
+}
+.stdForm .hl{
+  padding:1.5%;
+  margin-bottom: 16px;
+  text-align: center;
+  background-color: #000;
+  color:#fff;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 3px;
+}
+.stdForm .iptHl{
+  text-align: left;
+  padding:10px 0 2px 4px;
+  font-size: 15px;
+  font-weight: bold;
+}
+.stdForm input[type=text],input[type=password],input[type=email]{
+  width: 95%;
+  padding: 2%;
+  margin: 2px 0 8px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+.stdForm input[disabled]{
+  background-color: #eee;
+}
+
+.stdForm ::placeholder{
+  color: #aaa;
+}
+
+.stdForm .txtCenter{
+  text-align: center;
+}
+
+.stdForm select{
+  width: 99%;
+  padding: 2%;
+  margin: 4px 0 12px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+.stdForm select[disabled]{
+  background-color: #eee;
+  color:#000;
+}
+
+.stdForm .msgBox{
+  width: 90%;
+  margin: auto;
+  padding: 4%;
+  text-align: center;
+  background-color: #fff;
+  color: #000;
+  font-size: 18px;
+  border-radius: 3px;
+  border: 0.5px #aaa solid;
+}
+.stdForm .certBox{
+  display: block;
+  text-align: left;
+  width: 94%;
+  min-height: 160px;
+  resize: vertical;
+  padding:10px;
+  margin:2px 4px 10px 4px;
+  font-size: 14px;
+  box-shadow: 0px 1px 2px #666;
+}
+
+.stdForm .certBox[disabled]{
+  background-color: #fff;
+}
+
+.stdForm .btnFrame{
+  padding-top:24px;
+  text-align: center;
+}
+.stdForm .btnFrame button{
+  padding:1.5%;
+  margin: 0 14px 0 14px;
+  min-width: 110px;
+  background-color: #000;
+  color:#fff;
+  font-weight: bold;
+  *box-shadow: 0px 1px 3px #444;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+}
+.stdForm .btnFrame button:hover{
+  background-color: #333;
+}
+
+.stdForm ::-webkit-scrollbar {
+  width: 10px;
+}
+.stdForm ::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 5px grey; 
+  border-radius: 10px;
+}
+.stdForm ::-webkit-scrollbar-thumb {
+  background: #888; 
+  border-radius: 10px;
+}
+.stdForm ::-webkit-scrollbar-thumb:hover {
+  background: #555; 
+}
+
+.stdForm .icoBar{
+  text-align: right;
+  padding: 0 24px 6px 0;
+}
+.stdForm .icoBar img{
+  height: 24px;
+  margin: 0 6px 0 6px;
+  cursor:pointer;
+  border-bottom: 2px solid transparent;
+}
+.stdForm .icoBar img:hover{
+  border-bottom: 2px solid #000;
+}
+
+
+
+.msgPop{
+  position: fixed;
+  text-align: center;
+  bottom: 0px; 
+  left: 0px;
+  width: 100%;
+  z-index:10;
+}
+.msgPop .box{
+  position: relative;
+  display: table;
+  margin: auto;
+  padding:1%;
+  min-width: 500px;
+  background-color: rgba(0,0,0,0.7); 
+  color:#fff;
+  border-radius: 3px;
+}
+
+
+.xBtn{
+  position: absolute; 
+  right:-8px;
+  top:-8px;
+  background-color: #222;
+  color: #fff;
+  font-size: 12px;
+  text-align: center;
+  line-height: 20px;
+  width: 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid #000;
+}
+.xBtn:hover{
+  background-color: #000;
+}
+
+.stdTable{
+  margin: 20px auto 20px auto;
+  min-width: 900px;
+}
+.stdTable th{
+  background-color: #000;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  padding:6px;
+  border: 1px solid #333;
+}
+.stdTable td{
+  background-color: #fff;
+  color: #000;
+  font-size: 16px;
+  padding:6px;
+  border: 1px solid #aaa;
+}
+
+.stdTable .lastLine td{
+  background: none;
+  border: none;
+  text-align: right;
+  *padding-right: 4px; 
+}
+.stdTable .lastLine button{
+  padding:3px;
+  min-width: 64px;
+  background-color: #444;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  border:1px solid #000;
+  margin: 6px 4px 0 4px;
+  border-radius: 3px;
+}
+.stdTable .lastLine button:hover{
+  background-color: #000;
+}
+
+.keyValTbl{
+  width:98%;
+  margin: 2px 0 2px 2px ;
+}
+.keyValTbl th{
+  background-color: #444;
+  color: #fff;
+  font-weight: bold;
+  font-size: 13px;
+  text-align: left;
+  text-transform: uppercase;
+  padding:6px;
+  width: 70px;
+  border:none;
+}
+.keyValTbl td{
+  background-color: #ddd;
+  color: #000;
+  font-weight: normal;
+  font-size: 14px;
+  text-align: left;
+  padding:6px;
+  border: none;
+}
+.keyValTbl td:last-child{
+  width: 70px;
+  text-align: center;
+}
+
+.keyValTbl td input{
+  width:98%;
+  margin:-4px auto -4px auto;
+  padding:4px;
+  box-shadow: none;
+  border: 1px solid #888;
+  border-radius: 1px;
+}
+.keyValTbl th select{
+  margin:-4px;
+  padding:4px;
+  width: 76px;
+  font-size: 13px;
+  box-shadow: none;
+  border: 1px solid #444;
+  border-radius: 1px;
+  background: #666;
+  color:#fff;
+}
+
+.miniBtn{
+  display: inline-block;
+  padding:2px;
+  min-width: 60px;
+  background-color: #444;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  border:1px solid #000;
+  margin: -2px;
+  border-radius: 3px;
+}
+.miniBtn:hover{
+  background-color: #000;
+}
+
+.tokenBox{
+  position: relative;
+  max-width: 535px;
+  min-height: 16px;
+  line-height: 16px;
+  padding: 14px;
+  margin: 2px 0 8px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.tokenBox .blender{
+  position:absolute;
+  right:0px;
+  top:0px;
+  width:100px;
+  height: 40px;
+  *background-color: #fff;
+  background-image: linear-gradient(to right, transparent, #fff, #fff);
+}
+.tokenBox img{
+  position: absolute;
+  right:8px;
+  top:10px;
+  height: 22px;
+  cursor: pointer;
+}
+.tokenBox img:hover{
+  border-bottom: 2px solid #333;
+}
+
+.settingsCard{
+  position: relative;
+  display: block;
+  margin: 20px auto 20px auto;
+  padding:20px 20px 30px 20px;
+  min-width: 600px;
+  width: 50%;
+  max-width: 800px;
+  background-color: #fff;
+  box-shadow: 0px 4px 8px #777; 
+  text-align: left;
+}
+.settingsCard .editIcon{
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  *height:30px;
+  width:30px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.settingsCard .editIcon:hover{
+  border-bottom: 2px solid #000;
+}  
+.settingsCard .hl{
+  text-align: center;
+  font-size: 18px;
+  padding:0 0 14px 0;
+  color: #000;
+}
+.settingsCard .iptHl{
+  text-align: left;
+  padding:8px 0 2px 4px;
+  font-size: 14px;
+  font-weight: bold;
+}
+.settingsCard input[type=text],input[type=email]{
+  width: 95%;
+  padding: 10px;
+  margin: 2px 0 8px 0;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+}
+.settingsCard input[disabled]{
+  background-color: #eee;
+}
+.settingsCard ::placeholder{
+  color: #aaa;
+}
+.settingsCard .pwdTable{
+  width: 98%;
+  margin: 30px auto 6px 0;
+  *border:1px solid #000;
+  text-align: center;
+}
+.settingsCard .pwdTable td{
+  width:30%;
+}
+.settingsCard .pwdTable input[type=password]{
+  padding: 8px;
+  width:88%;
+  box-shadow: 0px 1px 2px #666;
+  border: none;
+  border-radius: 3px;
+  background-color:#fff;
+  font-size: 15px;
+  text-align: center;
+}
+
+.settingsCard .btnFrame{
+  text-align: center;
+  margin:14px auto auto auto;
+}
+.settingsCard .smlBtn{
+  display: inline-block;
+  padding:5px;
+  margin: 0px 10px 0px 10px ;
+  min-width: 140px;
+  background-color: #eee;
+  color:#000;
+  *font-weight: bold;
+  *box-shadow: 0px 1px 3px #444;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  box-shadow: 0px 1px 2px #666;
+}
+.settingsCard .smlBtn:hover{
+  text-decoration: underline;
+}
+
+.settingsCard .mainTbl{
+  width:98%;
+  margin:6px;
+}
+.settingsCard .mainTbl td{
+  box-shadow: 0px 1px 2px #666;
+  padding:4px 12px 4px 12px;
+  background-color: #fff;
+  vertical-align: middle;
+}
+.settingsCard .mainTbl td:first-child,td:nth-child(3){
+  text-align: center;
+  width: 60px; 
+}
+
+.settingsCard .mainIco{
+  width: 36px;
+  margin-top: 2px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+.settingsCard .mainIco:hover{
+  border-bottom: 2px solid #000;
+}
+
+.inactive{
+  max-height: 190px;
+  overflow:hidden;
+}
+.gradianBlender{
+  position:absolute;
+  bottom:0;
+  left:0;
+  height: 100px;
+  width: 100%;
+  background-image: linear-gradient(180deg, rgba(255,255,255,0), #fff , #fff );
+}
+
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 30px;
+  height: 17px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 13px;
+  width: 13px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: #444;
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #444;
+}
+input:checked + .slider:before {
+  -webkit-transform: translateX(13px);
+  -ms-transform: translateX(13px);
+  transform: translateX(13px);
+}
+.slider.round {
+  border-radius: 17px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
