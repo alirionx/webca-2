@@ -12,13 +12,22 @@ import tarfile
 
 #-Tools Globals------------------------------------
 curDir = os.path.dirname(os.path.realpath(__file__)) 
+
 baseFolderPath = os.path.join(curDir, "certs")
+
 settingsPath = os.path.join(curDir, "settings.yaml")
 accessFilePath = os.path.join(curDir, "access.yaml")
 
 flObj = open(settingsPath, "r")
 objIn = yaml.safe_load(flObj)
 flObj.close()
+
+#-Configure Data Path for Cert Data---
+if "customDataPath" in objIn:
+  customDataPath = objIn["customDataPath"]
+  if customDataPath:
+    baseFolderPath = os.path.join(customDataPath, "certs")
+#-------------------------------------
 
 folders = objIn["folders"]
 subjects = objIn["subjects"]
@@ -54,7 +63,7 @@ class helpers:
   #----------------------------------
   def chk_base_folder(self):
     if not os.path.isdir(baseFolderPath):
-      os.mkdir(baseFolderPath)
+      os.makedirs(baseFolderPath, exist_ok=True)
 
   #----------------------------------
   def gen_rendom_sn(self, bits=64):

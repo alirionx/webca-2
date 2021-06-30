@@ -1,4 +1,7 @@
 
+customDataPath: false
+# customDataPath: /var/lib/webca
+
 folders:
   - root
   - req
