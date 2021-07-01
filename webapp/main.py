@@ -147,10 +147,10 @@ auth = HTTPBasicAuth()
 #-Access Management Section----------------------------------------
 @app.before_first_request
 def before_everything():
-  # session["username"] = None
-  # session["role"] = None
-  session["username"] = "dquilitzsch"
-  session["role"] = "admin"
+  session["username"] = None
+  session["role"] = None
+  # session["username"] = "dquilitzsch"
+  # session["role"] = "admin"
 
   myHelpers = helpers()
   myHelpers.chk_base_folder()
