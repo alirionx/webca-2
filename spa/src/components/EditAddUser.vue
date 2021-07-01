@@ -32,7 +32,15 @@
         <div class="iptHl">Department</div>
         <input type="text" v-model="data.department" />
 
-        <div class="iptHl">Domains</div>
+        <div class="iptHl">LDAP Authentification</div>
+        <div class="chkBoxSpacer">
+          <label class="switch">
+            <input type="checkbox" v-model="data.ldap">
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="iptHl" v-if="data.role!='admin'">Domains</div>
         <table class="domTable" cellspacing="6px" v-if="data.role!='admin'">
           <tr v-for="(dom, idx) in domains" :key="idx">
             <td>
@@ -88,6 +96,7 @@ export default {
         firstname: "",
         lastname: "",
         department: "",
+        ldap: false,
         domains: {}
       },
     
@@ -166,6 +175,17 @@ export default {
 .domTable td:first-child{
   width:40px;
   text-align: center;
+}
+
+.chkBoxSpacer{
+  text-align: center;
+  padding:7px;
+  display: block;
+  width: 40px;
+  margin:4px;
+  background: #fff;
+  box-shadow: 0px 1px 2px #666;
+
 }
 
 </style>

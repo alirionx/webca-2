@@ -5,4 +5,5 @@ Flask-HTTPAuth
 pyOpenSsl
 #pysqlite3
 jwt
+python-ldap #Here you need python3-dev libsasl2-dev libldap2-dev => on ubuntu
 

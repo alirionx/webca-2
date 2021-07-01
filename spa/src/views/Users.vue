@@ -5,10 +5,14 @@
     <table class="stdTable">
       <tr>
         <th v-for="(col, idx) in defi" :key="idx" :style="{textAlign: col.align}">{{col.hl}}</th>
+        <th>LDAP</th>
         <th>act</th>
       </tr>
       <tr v-for="(row, idx) in data" :key="idx">
         <td v-for="(col, idx2) in defi" :key="idx2" :style="{textAlign: col.align}" >{{row[col.col]}}</td>
+        <td>
+          <input type="checkbox" disabled :checked="row.ldap" /> 
+        </td>
         <td>
           <ActMenu 
             v-bind:acts="acts" 
@@ -18,7 +22,7 @@
         </td>
       </tr>
       <tr class="lastLine">
-        <td :colspan="defi.length+1" >
+        <td :colspan="defi.length+2" >
           <button @click="()=>{editAddShow = 'new'}">add</button>
         </td>
       </tr>

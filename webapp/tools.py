@@ -1,5 +1,6 @@
 import os, sys, shutil
 import json, yaml
+from typing import Protocol
 import hashlib, binascii
 from flask.globals import request
 import re
@@ -243,7 +244,7 @@ class helpers:
 #----------------------------------------------------------
 class user:
   #----------------------------------
-  valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department", "invitationHash"]
+  valList = ["username", "email", "role", "passwordhash", "domains", "firstname", "lastname", "department", "invitationHash", "ldap"]
   mandaValsList = ["username", "role"]
   roles = ["admin", "caadmin"]
   #----------------------------------
@@ -264,6 +265,7 @@ class user:
     self.firstname = None
     self.lastname = None
     self.department = None
+    self.ldap = False
 
     if username:
       self.load_user(username)
@@ -336,11 +338,38 @@ class user:
 
   #----------------------------------
   def verify_password(self, password):
-    salt = self.passwordhash[:64]
-    self.passwordhash = self.passwordhash[64:]
-    pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt.encode('ascii'), 100000)
-    pwdhash = binascii.hexlify(pwdhash).decode('ascii')
-    return pwdhash == self.passwordhash
+    
+    #-The LDAP Auth: Ich bin mir nicht sicher, ob das hier gut aufgehoben ist ...
+    if self.ldap:
+      import ldap
+      ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+
+      try:
+        ldapConfObj = objIn["ldapAuth"]
+        objIn["ldapAuth"]["url"]
+        objIn["ldapAuth"]["domain"]
+      except:
+        print("LDAP is not configured correctly in settings!!")
+        return False
+
+      ldapUrl = ldapConfObj["url"]
+      ldapDom = ldapConfObj["domain"]
+      ldapUsrStr = self.username + '@' + ldapDom
+
+      ldapSrv = ldap.initialize(ldapUrl)
+      try:
+        ldapRes = ldapSrv.simple_bind_s(ldapUsrStr, password)
+        return True
+      except:
+        return False
+      
+    #-----------------------
+    else:
+      salt = self.passwordhash[:64]
+      self.passwordhash = self.passwordhash[64:]
+      pwdhash = hashlib.pbkdf2_hmac('sha512', password.encode('utf-8'), salt.encode('ascii'), 100000)
+      pwdhash = binascii.hexlify(pwdhash).decode('ascii')
+      return pwdhash == self.passwordhash
 
   #----------------------------------
   def load_user(self, username):

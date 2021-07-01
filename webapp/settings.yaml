@@ -2,6 +2,10 @@
 customDataPath: false
 # customDataPath: /var/lib/webca
 
+ldapAuth:
+  url: "ldaps://192.168.10.20:636"
+  domain: 'app-scape.lab'
+
 folders:
   - root
   - req
