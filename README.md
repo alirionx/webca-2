@@ -6,8 +6,8 @@ A simple web interface for managaing own Certificate Authorities. Python Flask i
 
 **Build SPA (Web-Frontend) in Docker**
 
-    $ chmod +x build_in_docker.sh 
-    $ ./build_in_docker.sh
+    $ chmod +x build-dist_in-docker.sh 
+    $ ./build-dist_in-docker.sh
   
   <br>
   

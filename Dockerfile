@@ -2,7 +2,11 @@ FROM ubuntu:focal
 
 RUN apt update && apt install -y \
   python3 \
-  python3-pip
+  python3-pip \
+  python-dev \
+  libsasl2-dev \
+  libldap2-dev \
+  libssl-dev
 
 COPY ./webapp/requirements.txt /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt
